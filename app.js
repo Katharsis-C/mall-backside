@@ -5,6 +5,7 @@ const json = require('koa-json')
 const onerror = require('koa-onerror')
 const bodyparser = require('koa-bodyparser')
 const logger = require('koa-logger')
+const cors = require('koa2-cors')
 const koaJwt = require('koa-jwt')
 
 
@@ -56,7 +57,7 @@ app.use(async (ctx, next) => {
 // })
 // )
 
-
+app.use(cors())
 
 // routes
 app.use(index.routes(), index.allowedMethods())

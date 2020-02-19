@@ -91,7 +91,10 @@ router.delete("/", async (ctx, next) => {
     })
 })
 
-//获取属性
+/* 
+获取属性 
+请求参数 property 
+*/
 router.post("/getspec", async (ctx, next) => {
     let reqProperty = ctx.request.body.property
     await Category.findOne({ property: reqProperty })
@@ -103,6 +106,38 @@ router.post("/getspec", async (ctx, next) => {
                 doc
             }
         })
+})
+
+//添加属性
+router.post("/spec", async (ctx, next) => {
+    ctx.response.body = "hello"
+    let [cate_id, typeName, typeId] = [
+        ctx.request.body.cate_id,
+        ctx.request.body.specType,
+        null
+    ]
+    if(!typeName) {
+        ctx.response.body = {
+            code: "404",
+            msg: `添加分类失败`
+            // doc
+        }
+        return next()
+    }
+    let data = new Specification({ specType: typeName })
+    await data.save().then(doc => {
+        typeId = doc._id
+    })
+    await Category.updateOne(
+        { _id: cate_id },
+        { $addToSet: { specs: typeId } }
+    ).then(doc => {
+        ctx.response.body = {
+            code: "200",
+            msg: `添加分类成功`
+            // doc
+        }
+    })
 })
 
 //修改属性
