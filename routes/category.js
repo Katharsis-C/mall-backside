@@ -8,7 +8,7 @@ router.prefix("/category")
 router.get("/", async function(ctx, next) {
     await Category.find({})
         // .then(doc => {console.log(doc)})
-        // .populate("specs")
+        .populate("specs")
         .then(doc => {
             ctx.response.body = {
                 code: "200",
@@ -44,7 +44,7 @@ router.post("/", async (ctx, next) => {
     }
 })
 
-//修改分类
+//修改分类 需要category._id
 router.put("/", async (ctx, next) => {
     let id = ctx.request.body._id
     let data = ctx.request.body.data
@@ -73,7 +73,7 @@ router.put("/", async (ctx, next) => {
         })
 })
 
-//删除分类
+//删除分类 需要category._id
 router.delete("/", async (ctx, next) => {
     let id = ctx.request.body._id
     await Category.deleteOne({ _id: id }).then(doc => {
@@ -91,10 +91,8 @@ router.delete("/", async (ctx, next) => {
     })
 })
 
-/* 
-获取属性 
-请求参数 property 
-*/
+//获取属性类别 需要 property
+
 router.post("/getspec", async (ctx, next) => {
     let reqProperty = ctx.request.body.property
     await Category.findOne({ property: reqProperty })
@@ -108,7 +106,7 @@ router.post("/getspec", async (ctx, next) => {
         })
 })
 
-//添加属性
+//添加属性类别 需category._id
 router.post("/spec", async (ctx, next) => {
     ctx.response.body = "hello"
     let [cate_id, typeName, typeId] = [
@@ -116,7 +114,7 @@ router.post("/spec", async (ctx, next) => {
         ctx.request.body.specType,
         null
     ]
-    if(!typeName) {
+    if (!typeName) {
         ctx.response.body = {
             code: "404",
             msg: `添加分类失败`
@@ -140,7 +138,7 @@ router.post("/spec", async (ctx, next) => {
     })
 })
 
-//修改属性
+//修改属性类别 需要spec._id
 router.put("/spec", async (ctx, next) => {
     let id = ctx.request.body._id
     let data = ctx.request.body.data
@@ -169,9 +167,10 @@ router.put("/spec", async (ctx, next) => {
         })
 })
 
-//删除属性
+//删除属性类 需要Spec._id
 router.delete("/spec", async (ctx, next) => {
     let id = ctx.request.body._id
+    await Category.updateMany({ $pull: { specs: id } })
     await Specification.deleteOne({ _id: id })
         .populate("specs")
         .then(doc => {
@@ -188,9 +187,41 @@ router.delete("/spec", async (ctx, next) => {
                 }
             }
         })
-    // await Specification.find({}).then(doc => {
-    //     ctx.response.body = doc
-    // })
 })
 
+//添加规格 需要spec._id
+router.post("/specification", async (ctx, next) => {
+    let { _id: id, data } = ctx.request.body
+    await Specification.updateOne(
+        { _id: id },
+        { $addToSet: { specList: data } }
+    ).then(doc => {
+        ctx.response.body = {
+            code: "200",
+            msg: `规格 ${data.style} 成功`
+            // doc
+        }
+    })
+})
+
+//删除规格 spec._id和style._id
+router.delete("/specification", async (ctx, next) => {
+    let { specID, styleID } = ctx.request.body
+    await Specification.updateMany(
+        { _id: specID },
+        { $pull: { specList: { _id: styleID } } }
+    ).then(doc => {
+        if (doc.nModified === 0) {
+            ctx.response.body = {
+                code: "404",
+                msg: "什么规格也没有删掉..."
+            }
+        } else {
+            ctx.response.body = {
+                code: "200",
+                msg: "删除成功"
+            }
+        }
+    })
+})
 module.exports = router
