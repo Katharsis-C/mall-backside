@@ -49,7 +49,6 @@ router.put("/", async (ctx, next) => {
         picture: ctx.request.body.picture
     }
 
-    console.log(news)
     await News.updateOne(
         { _id: news._id },
         { title: news.title, content: news.content, picture: news.picture }
