@@ -25,20 +25,7 @@ router.get("/", function(ctx, next) {
     ctx.body = "this is a users response!"
 })
 
-/**
- * 登录接口
- *
- * request
- * --account password
- *
- * response
- * --code
- * --message
- * --user
- *    |--account
- *    |--user_id
- *
- *  */
+
 
 router.post("/login", async (ctx, next) => {
     reqAccount = ctx.request.body.account
@@ -62,13 +49,13 @@ router.post("/login", async (ctx, next) => {
                 //         token
                 //     }
                 ctx.response.body = {
-                    code: "1",
+                    code: "200",
                     message: `login success`,
                     doc
                 }
             } else {
                 ctx.response.body = {
-                    code: "-1",
+                    code: "404",
                     message: `password error`
                 }
             }

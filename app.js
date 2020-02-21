@@ -14,7 +14,7 @@ const users = require('./routes/users')
 const news = require('./routes/news')
 const goods = require('./routes/goods')
 const category = require('./routes/category')
-const spec = require('./routes/specification')
+const admin = require('./routes/admin')
 
 // error handler
 onerror(app)
@@ -31,6 +31,9 @@ app.use(views(__dirname + '/views', {
   extension: 'pug'
 }))
 
+//cors
+app.use(cors())
+
 // logger
 app.use(async (ctx, next) => {
   const start = new Date()
@@ -39,25 +42,60 @@ app.use(async (ctx, next) => {
   console.log(`${ctx.method} ${ctx.url} - ${ms}ms`)
 })
 
+//401
+app.use((ctx, next) => {
+    return next().catch((err) => {
+        if(err.status === 401){
+            ctx.status = 401;
+            ctx.body = 'Protected resource, use Authorization header to get access\n';
+        }else{
+            throw err;
+        }
+    })
+})
 
-// app.use((ctx, next) => {
-//     return next().catch((err) => {
-//         if(err.status === 401){
-//             ctx.status = 401;
-//             ctx.body = 'Protected resource, use Authorization header to get access\n';
-//         }else{
-//             throw err;
-//         }
-//     })
-// })
-// app.use(koaJwt({
-//     secret:'UMP45'
-// }).unless({
-//     path:[/\/login/]
-// })
-// )
+//verify token
+app.use((ctx, next) => {
+    if (ctx.header && ctx.header.authorization) {
+      const parts = ctx.header.authorization.split(' ');
+      if (parts.length === 2) {
+        //取出token
+        const scheme = parts[0];
+        const token = parts[1];
+        console.log(`${scheme}\n${token}`)
+        if (/^Bearer$/i.test(scheme)) {
+          try {
+              console.log('verify')
+            //jwt.verify方法验证token是否有效
+            jwt.verify(token, "demo", {
+              complete: true
+            });
+          } catch (error) {
+            
+          }
+        }
+      }
+    }
+  
+    return next().catch(err => {
+      if (err.status === 401) {
+        ctx.status = 401;
+        ctx.body =
+          'Protected resource, use Authorization\n';
+      } else {
+        throw err;
+      }});
+   });   
 
-app.use(cors())
+//koa jwt
+app.use(koaJwt({
+    secret:'UMP45'
+}).unless({
+    path:[/^\/admin\/login/]
+})
+)
+
+
 
 // routes
 app.use(index.routes(), index.allowedMethods())
@@ -65,6 +103,7 @@ app.use(users.routes(), users.allowedMethods())
 app.use(news.routes(), index.allowedMethods())
 app.use(goods.routes(), index.allowedMethods())
 app.use(category.routes(), index.allowedMethods())
+app.use(admin.routes(), index.allowedMethods())
 
 // error-handling
 app.on('error', (err, ctx) => {
