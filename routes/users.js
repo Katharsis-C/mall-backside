@@ -27,41 +27,41 @@ router.get("/", function(ctx, next) {
 
 
 
-router.post("/login", async (ctx, next) => {
-    reqAccount = ctx.request.body.account
-    reqPWD = ctx.request.body.password
-    await User.findOne({
-        $or: [{ userEmail: reqAccount }, { userTel: reqAccount }]
-    }).then(doc => {
-        if (!doc) {
-            ctx.response.body = {
-                code: "0",
-                msg: "user not found"
-            }
-        } else {
-            if (doc.userPassword === reqPWD) {
-                // const token = jwt.sign(doc.userID, secret, { expiresIn: '1h' })
-                // ctx.response.body = {
-                //     code: 1,
-                //     message: `${reqAccount} login success`,
-                //     user: {
-                //         user_id: doc.userID,
-                //         token
-                //     }
-                ctx.response.body = {
-                    code: "200",
-                    message: `login success`,
-                    doc
-                }
-            } else {
-                ctx.response.body = {
-                    code: "404",
-                    message: `password error`
-                }
-            }
-        }
-    })
-})
+// router.post("/login", async (ctx, next) => {
+//     reqAccount = ctx.request.body.account
+//     reqPWD = ctx.request.body.password
+//     await User.findOne({
+//         $or: [{ userEmail: reqAccount }, { userTel: reqAccount }]
+//     }).then(doc => {
+//         if (!doc) {
+//             ctx.response.body = {
+//                 code: "0",
+//                 msg: "user not found"
+//             }
+//         } else {
+//             if (doc.userPassword === reqPWD) {
+//                 const token = jwt.sign(doc.userID, secret, { expiresIn: '1h' })
+//                 ctx.response.body = {
+//                     code: 1,
+//                     message: `${reqAccount} login success`,
+//                     user: {
+//                         user_id: doc.userID,
+//                         token}
+//                     }
+//                 ctx.response.body = {
+//                     code: "200",
+//                     message: `login success`,
+//                     doc
+//                 }
+//             } else {
+//                 ctx.response.body = {
+//                     code: "404",
+//                     message: `password error`
+//                 }
+//             }
+//         }
+//     })
+// })
 
 router.get("/getuser", async (ctx, next) => {
     

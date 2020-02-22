@@ -1,5 +1,4 @@
 const router = require('koa-router')()
-const mongoose = require('mongoose')
 const Goods = require('../models/goods')
 
 router.prefix('/goods')

@@ -25,7 +25,7 @@ router.post("/login", async (ctx, next) => {
             } else {
                 ctx.response.body = {
                     code: "-1",
-                    message: `密码错误`
+                    msg: `密码错误`
                 }
             }
         }

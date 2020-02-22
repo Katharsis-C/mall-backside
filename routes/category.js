@@ -6,15 +6,19 @@ router.prefix("/category")
 
 //获取分类
 router.get("/", async function(ctx, next) {
+    let cateMap = new Map()
+    let cateSet = new Set()
     await Category.find({})
-        // .then(doc => {console.log(doc)})
-        // .populate("specs")
         .then(doc => {
-            ctx.response.body = {
-                code: "200",
-                msg: "获取分类成功",
-                doc
-            }
+            doc.forEach(ele => {
+                cateMap.set(ele.property, ele.category)
+            })
+            console.log(cateMap)
+            // ctx.response.body = {
+            //     code: "200",
+            //     msg: "获取分类成功",
+            //     doc
+            // }
         })
 })
 

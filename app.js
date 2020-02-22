@@ -7,6 +7,7 @@ const bodyparser = require("koa-bodyparser")
 const logger = require("koa-logger")
 const cors = require("koa2-cors")
 const koaJwt = require("koa-jwt")
+const jwt = require("jsonwebtoken")
 
 const index = require("./routes/index")
 const users = require("./routes/users")
@@ -45,21 +46,9 @@ app.use(async (ctx, next) => {
     console.log(`${ctx.method} ${ctx.url} - ${ms}ms`)
 })
 
-//401
-app.use((ctx, next) => {
-    return next().catch(err => {
-        if (err.status === 401) {
-            ctx.status = 401
-            ctx.body =
-                "Protected resource, use Authorization header to get access\n"
-        } else {
-            throw err
-        }
-    })
-})
 
 //verify token
-app.use((ctx, next) => {
+app.use(async (ctx, next) => {
     if (ctx.header && ctx.header.authorization) {
         const parts = ctx.header.authorization.split(" ")
         if (parts.length === 2) {
@@ -71,11 +60,13 @@ app.use((ctx, next) => {
                 try {
                     console.log("verify")
                     //jwt.verify方法验证token是否有效
-                    jwt.verify(token, "demo", {
+                    jwt.verify(token, "UMP45", {
                         complete: true
                     })
                 } catch (error) {
-
+                    console.log(error)
+                    ctx.status = 401
+                    ctx.body = "未登录或者token过期, 请重新登录"
                 }
             }
         }
@@ -99,6 +90,21 @@ app.use(
         path: [/^\/admin\/login/]
     })
 )
+
+
+//401
+app.use((ctx, next) => {
+    return next().catch(err => {
+        if (err.status === 401) {
+            ctx.status = 401
+            ctx.body =
+                "Protected resource, use Authorization header to get access\n"
+        } else {
+            throw err
+        }
+    })
+})
+
 
 // routes
 app.use(index.routes(), index.allowedMethods())
