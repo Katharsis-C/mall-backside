@@ -75,12 +75,27 @@ router.put("/", async (ctx, next) => {
 
 //删除分类 需要category._id
 router.delete("/", async (ctx, next) => {
-    let id = ctx.request.body._id
-    await Category.deleteOne({ _id: id }).then(doc => {
+    let id = ctx.request.body
+    let speclist = null
+    await Category.findOne(id).then(doc => {
+        if (!doc) {
+            ctx.response.body = {
+                code: "404",
+                msg: "什么也没有删掉..."
+            }
+        } else {
+            speclist = doc.specs
+        }
+    })
+    await Specification.deleteMany({
+        _id: speclist
+    })
+
+    await Category.deleteOne(id).then(doc => {
         if (doc.deletedCount === 0) {
             ctx.response.body = {
                 code: "404",
-                msg: "什么分类也没有删掉..."
+                msg: "什么也没有删掉..."
             }
         } else {
             ctx.response.body = {
