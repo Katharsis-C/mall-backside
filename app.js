@@ -46,8 +46,16 @@ app.use(async (ctx, next) => {
     console.log(`${ctx.method} ${ctx.url} - ${ms}ms`)
 })
 
+// // koa jwt
+app.use(
+    koaJwt({
+        secret: "UMP45"
+    }).unless({
+        path: [/^\/admin\/login/]
+    })
+)
 
-//verify token
+// verify token
 app.use(async (ctx, next) => {
     if (ctx.header && ctx.header.authorization) {
         const parts = ctx.header.authorization.split(" ")
@@ -82,14 +90,7 @@ app.use(async (ctx, next) => {
     })
 })
 
-//koa jwt
-app.use(
-    koaJwt({
-        secret: "UMP45"
-    }).unless({
-        path: [/^\/admin\/login/]
-    })
-)
+
 
 
 //401

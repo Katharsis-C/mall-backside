@@ -6,20 +6,56 @@ router.prefix("/category")
 
 //获取分类
 router.get("/", async function(ctx, next) {
-    let cateMap = new Map()
+    let createCate = function(id, cate) {
+        let cateObj = {
+            id: id,
+            category: cate,
+            isok: true,
+            level: "一级",
+            children: []
+        }
+        return cateObj
+    }
+
+    let createProp = function(id, prop) {
+        let propObj = {
+            propID: id,
+            property: prop,
+            isok: true,
+            level: "二级"
+        }
+        return propObj
+    }
+
+    let propMap = new Map()
     let cateSet = new Set()
-    await Category.find({})
-        .then(doc => {
-            doc.forEach(ele => {
-                cateMap.set(ele.property, ele.category)
-            })
-            console.log(cateMap)
-            // ctx.response.body = {
-            //     code: "200",
-            //     msg: "获取分类成功",
-            //     doc
-            // }
+    let resList = []
+    let i = 1
+    await Category.find({}).then(doc => {
+        doc.forEach(ele => {
+            propMap.set(createProp(ele._id, ele.property), ele.category)
+            cateSet.add(ele.category)
         })
+        cateSet.forEach(ele => {
+            resList.push(createCate(i, ele))
+            i++
+        })
+        for (let [key, value] of propMap) {
+            for (const cate of resList) {
+                // console.log(cate.category)
+                if (cate.category === value) {
+                    cate.children.push(key)
+                }
+            }
+        }
+
+        // console.log(propMap)
+        ctx.response.body = {
+            code: "200",
+            msg: "获取分类成功",
+            resList
+        }
+    })
 })
 
 //添加分类
@@ -48,9 +84,9 @@ router.post("/", async (ctx, next) => {
     }
 })
 
-//修改分类 需要category._id
+//修改分类 property._id
 router.put("/", async (ctx, next) => {
-    let id = ctx.request.body.cateID
+    let id = ctx.request.body.propID
     let data = ctx.request.body.data
     await Category.updateOne({ _id: id }, data)
         .then(doc => {
@@ -77,10 +113,10 @@ router.put("/", async (ctx, next) => {
         })
 })
 
-//删除分类 需要category._id
+//删除分类 property._id
 router.delete("/", async (ctx, next) => {
-    let cateid = ctx.request.body.cateID
-    let id = {_id: cateid}
+    let propid = ctx.request.body.propID
+    let id = { _id: propid }
     let speclist = null
     await Category.findOne(id).then(doc => {
         if (!doc) {
@@ -126,10 +162,10 @@ router.post("/getspec", async (ctx, next) => {
         })
 })
 
-//添加属性类别 需category._id
+//添加属性类别 需category/property._id
 router.post("/spec", async (ctx, next) => {
-    let [cateID, typeName, typeId] = [
-        ctx.request.body.cateID,
+    let [propID, typeName, typeId] = [
+        ctx.request.body.propID,
         ctx.request.body.specType,
         null
     ]
@@ -146,7 +182,7 @@ router.post("/spec", async (ctx, next) => {
         typeId = doc._id
     })
     await Category.updateOne(
-        { _id: cateID },
+        { _id: propID },
         { $addToSet: { specs: typeId } }
     ).then(doc => {
         ctx.response.body = {
@@ -216,7 +252,7 @@ router.post("/specification", async (ctx, next) => {
         { _id: specID },
         { $addToSet: { specList: data } }
     ).then(doc => {
-        if(doc.nModified === 0) {
+        if (doc.nModified === 0) {
             ctx.response.body = {
                 code: "404",
                 msg: "添加的属性"
@@ -224,7 +260,7 @@ router.post("/specification", async (ctx, next) => {
         } else {
             ctx.response.body = {
                 code: "200",
-                msg: `规格 ${data.style} 成功`,
+                msg: `规格 ${data.style} 成功`
             }
         }
     })
@@ -249,5 +285,53 @@ router.delete("/specification", async (ctx, next) => {
             }
         }
     })
+})
+
+//删除一级分类category
+router.delete("/senior", async (ctx, next) => {
+    let arr = []
+    let { category } = ctx.request.body
+    await Category.find({ category: category }).then(doc => {
+        for (const ele of doc) {
+            arr.push(...ele.specs)
+        }
+    })
+    await Specification.deleteMany({
+        _id: arr
+    })
+
+    await Category.deleteMany({ category: category }).then(doc => {
+        if (doc.deletedCount === 0) {
+            ctx.response.body = {
+                code: "404",
+                msg: "什么也没有删掉"
+            }
+        } else {
+            ctx.response.body = {
+                code: "200",
+                msg: "一级分类删除成功"
+            }
+        }
+    })
+})
+
+router.put("/senior", async (ctx, next) => {
+    console.log('hello')
+    let { old, newName } = ctx.request.body
+    await Category.updateMany({ category: old }, { category: newName }).then(
+        doc => {
+            if (doc.nModified > 0) {
+                ctx.response.body = {
+                    code: "200",
+                    msg: "修改成功"
+                }
+            } else {
+                ctx.response.body = {
+                    code: "404",
+                    msg: "修改失败"
+                }
+            }
+        }
+    )
 })
 module.exports = router
