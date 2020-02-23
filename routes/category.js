@@ -154,10 +154,17 @@ router.post("/getspec", async (ctx, next) => {
     await Category.findOne({ property: reqProperty })
         .populate("specs")
         .then(doc => {
-            ctx.response.body = {
-                code: "200",
-                msg: `获取${reqProperty}的参数成功`,
-                doc
+            if (doc) {
+                ctx.response.body = {
+                    code: "200",
+                    msg: `获取${reqProperty}的参数成功`,
+                    doc
+                }
+            } else {
+                ctx.response.body = {
+                    code: "404",
+                    msg: `${reqProperty}的信息`
+                }
             }
         })
 })
@@ -316,7 +323,7 @@ router.delete("/senior", async (ctx, next) => {
 })
 
 router.put("/senior", async (ctx, next) => {
-    console.log('hello')
+    console.log("hello")
     let { old, newName } = ctx.request.body
     await Category.updateMany({ category: old }, { category: newName }).then(
         doc => {

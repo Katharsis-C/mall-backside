@@ -68,8 +68,8 @@ router.put("/", async (ctx, next) => {
 })
 
 router.delete("/", async (ctx, next) => {
-    let item = ctx.request.body
-    await News.deleteOne(item).then(doc => {
+    let id = ctx.request.body._id
+    await News.deleteOne({_id: id}).then(doc => {
         if (doc.deletedCount !== 0) {
             ctx.response.body = {
                 code: "200",
