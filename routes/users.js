@@ -63,8 +63,6 @@ router.get("/", function(ctx, next) {
 //     })
 // })
 
-router.get("/getuser", async (ctx, next) => {
-    
-})
+
 
 module.exports = router

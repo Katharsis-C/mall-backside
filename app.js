@@ -63,10 +63,10 @@ app.use(async (ctx, next) => {
             //取出token
             const scheme = parts[0]
             const token = parts[1]
-            console.log(`${scheme}\n${token}`)
+            // console.log(`${scheme}\n${token}`)
             if (/^Bearer$/i.test(scheme)) {
                 try {
-                    console.log("verify")
+                    // console.log("verify")
                     //jwt.verify方法验证token是否有效
                     jwt.verify(token, "UMP45", {
                         complete: true

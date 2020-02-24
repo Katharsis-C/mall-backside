@@ -163,7 +163,7 @@ router.post("/getspec", async (ctx, next) => {
             } else {
                 ctx.response.body = {
                     code: "404",
-                    msg: `${reqProperty}的信息`
+                    msg: `没有找到相关的属性`
                 }
             }
         })
@@ -171,12 +171,12 @@ router.post("/getspec", async (ctx, next) => {
 
 //添加属性类别 需category/property._id
 router.post("/spec", async (ctx, next) => {
-    let [propID, typeName, typeId] = [
+    let [propID, data, typeId] = [
         ctx.request.body.propID,
-        ctx.request.body.specType,
+        ctx.request.body.data,
         null
     ]
-    if (!typeName) {
+    if (!data) {
         ctx.response.body = {
             code: "404",
             msg: `添加分类失败`
@@ -184,8 +184,8 @@ router.post("/spec", async (ctx, next) => {
         }
         return next()
     }
-    let data = new Specification({ specType: typeName })
-    await data.save().then(doc => {
+    let _data = new Specification({ specType: data.specType })
+    await _data.save().then(doc => {
         typeId = doc._id
     })
     await Category.updateOne(
@@ -204,6 +204,7 @@ router.post("/spec", async (ctx, next) => {
 router.put("/spec", async (ctx, next) => {
     let id = ctx.request.body.specID
     let data = ctx.request.body.data
+    console.log(data)
     await Specification.updateOne({ _id: id }, data)
         .then(doc => {
             console.log(doc)
