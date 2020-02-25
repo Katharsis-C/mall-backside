@@ -147,17 +147,17 @@ router.delete("/", async (ctx, next) => {
     })
 })
 
-//获取属性类别 需要 property
+//获取属性类别 需要 property._id
 
 router.post("/getspec", async (ctx, next) => {
     let reqProperty = ctx.request.body.property
-    await Category.findOne({ property: reqProperty })
+    await Category.findOne({ _id: reqProperty })
         .populate("specs")
         .then(doc => {
             if (doc) {
                 ctx.response.body = {
                     code: "200",
-                    msg: `获取${reqProperty}的参数成功`,
+                    msg: `获取${doc.property}的参数成功`,
                     doc
                 }
             } else {
@@ -167,6 +167,7 @@ router.post("/getspec", async (ctx, next) => {
                 }
             }
         })
+    return next()
 })
 
 //添加属性类别 需category/property._id

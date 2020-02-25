@@ -14,6 +14,6 @@ const userSchema = mongoose.Schema({
     orderList: [{itemName: String, itemStatus: String}],
     coupon: Array,
     collects: Array
-})
+},{versionKey: false})
 
 module.exports = mongoose.model('User', userSchema)

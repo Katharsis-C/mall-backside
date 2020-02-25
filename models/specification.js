@@ -5,6 +5,6 @@ const specSchema = mongoose.Schema({
     specList: [                        //规格列表
         {style: String}        //规格型号
     ]
-})
+},{versionKey: false})
 
 module.exports = mongoose.model("Spec", specSchema)
