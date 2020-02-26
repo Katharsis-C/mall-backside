@@ -7,6 +7,7 @@ router.prefix("/goods")
 
 router.get("/", async (ctx, next) => {
     let resList = []
+
     let createItem = function(obj) {
         let itemObj = {
             商品名称: obj.itemName,
@@ -16,13 +17,12 @@ router.get("/", async (ctx, next) => {
             收藏量: obj.collectCount,
             评价量: obj.rateCount,
             二级分类: obj.junior,
-            规格: obj.style
+            规格: obj.style,
+            规格名: []
         }
         return itemObj
     }
-    await Goods.find({})
-    .populate("junior","property")
-    .then(doc => {
+    await Goods.find({}).then(doc => {
         if (doc) {
             for (const item of doc) {
                 resList.push(createItem(item))
@@ -31,17 +31,29 @@ router.get("/", async (ctx, next) => {
         }
     })
 
-    console.log(resList)
-    let objList = []
+    for (let element of resList) {
+        await Category.findOne({ _id: element.二级分类 }).then(doc => {
+            element.二级分类 = doc.property
+        })
+        for (let style of element.规格) {
+            await Spec.findOne(
+                { "specList._id": style },
+                { "specList.$": 1 }
+            ).then(doc => {
+                style = doc.specList[0].style
+                element.规格名.push(style)
+            })
+        }
+        delete element.规格
+    }
 
-    // resList.forEach(async ele => {
-    //     objList = objList.concat(ele.规格)
-    //     await Category.findOne({ _id: ele.二级分类 }).then(doc => {
-    //         ele.二级分类 = doc.property
-    //     })
-    // })
-
-
+    await next().then(() => {
+        ctx.response.body = {
+            code: "200",
+            msg: "获取商品列表成功",
+            data: resList
+        }
+    })
 })
 
 router.post("/", async (ctx, next) => {

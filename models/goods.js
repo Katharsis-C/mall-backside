@@ -11,8 +11,8 @@ const goodsSchema = mongoose.Schema(
         collectCount: { type: Number, required: true },
         rateCount: { type: Number, required: true },
         itemDetail: { type: String, required: true },
-        junior: { type:mongoose.Types.ObjectId , ref: "Category", required: true},
-        style: [{ type:mongoose.Types.ObjectId , ref: "Spec", required: true}]
+        junior: { type: String, required: true },
+        style: { type: Array, required: true }
     },
     { versionKey: false }
 )
