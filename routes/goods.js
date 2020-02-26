@@ -10,21 +10,28 @@ router.get("/", async (ctx, next) => {
 
     let createItem = function(obj) {
         let itemObj = {
+            id: obj._id,
             itemName: obj.itemName,
+            homeImg: obj.homeImg,
+            goodsImg: obj.goodsImg,
+            price: obj.price,
             stock: obj.stock,
-            itemDetail: obj.itemDetail,
             salesCount: obj.salesCount,
             collectCount: obj.collectCount,
             rateCount: obj.rateCount,
+            itemDetail: obj.itemDetail,
             junior: obj.junior,
-            规格: obj.style,
-            style: []
+            styleID: obj.styleID,
+            type: "",
+            styleList: null
         }
         return itemObj
     }
     await Goods.find({}).then(doc => {
         if (doc) {
+            // console.log(doc)
             for (const item of doc) {
+                // console.log(doc)
                 resList.push(createItem(item))
             }
             // console.log(doc)
@@ -32,22 +39,31 @@ router.get("/", async (ctx, next) => {
     })
 
     for (let element of resList) {
-        await Category.findOne({ _id: element.junior }).then(doc => {
-            element.junior = doc.property
-        })
-        for (let style of element.规格) {
+        await Category.findOne(
+            { _id: element.junior },
+            { property: 0, category: 0}
+        )
+            .populate("specs")
+            .then(doc => {
+                // console.log(doc)
+                element.styleList = (doc.specs)
+            })
+
+        for (let style of element.styleID) {
             await Spec.findOne(
                 { "specList._id": style },
-                { "specList.$": 1 }
+                { _id: 0, specType: 1, "specList.$": 1 }
             ).then(doc => {
-                style = doc.specList[0].style
-                element.style.push(style)
+                let _type = doc.specType
+                let sty = doc.specList[0].style
+                // console.log(`${_type} ${sty}`)
+                element.type += `${_type} ${sty} `
             })
         }
-        delete element.规格
     }
 
     await next().then(() => {
+        // console.log(resList)
         ctx.response.body = {
             code: "200",
             msg: "获取商品列表成功",
@@ -68,7 +84,7 @@ router.post("/", async (ctx, next) => {
     let item = new Goods(req)
     await item
         .save()
-        .then(doc => {
+        .then(() => {
             ctx.response.body = {
                 code: "200",
                 msg: "添加商品成功"
@@ -81,6 +97,30 @@ router.post("/", async (ctx, next) => {
                 msg: "添加商品失败"
             }
         })
+})
+
+router.put("/", async (ctx, next) => {
+    let req = ctx.request.body
+    let id = ctx.request.body.id
+    delete req.id
+    // console.log(id)
+    // console.log(req)
+    await Goods.updateOne({ _id: id }, req).then(doc => {
+        console.log(doc)
+        if (doc.nModified === 0) {
+            ctx.response.body = {
+                code: "404",
+                msg: "没有修改的商品"
+                // doc
+            }
+        } else {
+            ctx.response.body = {
+                code: "200",
+                msg: "修改商品信息成功"
+                // doc
+            }
+        }
+    })
 })
 
 module.exports = router
