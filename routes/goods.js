@@ -10,15 +10,15 @@ router.get("/", async (ctx, next) => {
 
     let createItem = function(obj) {
         let itemObj = {
-            商品名称: obj.itemName,
-            库存数量: obj.stock,
-            商品参数: obj.itemDetail,
-            销售量: obj.salesCount,
-            收藏量: obj.collectCount,
-            评价量: obj.rateCount,
-            二级分类: obj.junior,
+            itemName: obj.itemName,
+            stock: obj.stock,
+            itemDetail: obj.itemDetail,
+            salesCount: obj.salesCount,
+            collectCount: obj.collectCount,
+            rateCount: obj.rateCount,
+            junior: obj.junior,
             规格: obj.style,
-            规格名: []
+            style: []
         }
         return itemObj
     }
@@ -32,8 +32,8 @@ router.get("/", async (ctx, next) => {
     })
 
     for (let element of resList) {
-        await Category.findOne({ _id: element.二级分类 }).then(doc => {
-            element.二级分类 = doc.property
+        await Category.findOne({ _id: element.junior }).then(doc => {
+            element.junior = doc.property
         })
         for (let style of element.规格) {
             await Spec.findOne(
@@ -41,7 +41,7 @@ router.get("/", async (ctx, next) => {
                 { "specList.$": 1 }
             ).then(doc => {
                 style = doc.specList[0].style
-                element.规格名.push(style)
+                element.style.push(style)
             })
         }
         delete element.规格
