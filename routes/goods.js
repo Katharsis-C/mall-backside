@@ -125,7 +125,7 @@ router.put("/", async (ctx, next) => {
 
 router.delete("/", async (ctx, next) => {
     await Goods.deleteOne({ _id: ctx.request.body }).then(doc => {
-        console.log(doc)
+        // console.log(doc)
         if (doc.deletedCount === 0) {
             ctx.response.body = {
                 code: "404",

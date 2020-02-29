@@ -40,17 +40,17 @@ router.get("/getuser", async (ctx, next) => {
     let resList = []
     let createUser = obj => {
         let userObj = {
-            帐号: obj.userID,
-            昵称: obj.nickname,
-            姓名: obj.userName,
-            性别: obj.userSex,
-            生日: obj.birth,
-            电话号码: obj.userTel,
-            收货地址: obj.addressList,
-            用户订单: obj.orderList,
-            用户评价: obj.comment,
-            优惠券: obj.coupon,
-            用户收藏: obj.collect
+            account: obj.userID,
+            nickName: obj.nickname,
+            fullName: obj.userName,
+            gender: obj.userSex,
+            birth: obj.birth,
+            phoneNum: obj.userTel,
+            address: obj.addressList,
+            orderList: obj.orderList,
+            comment: obj.comment,
+            coupon: obj.coupon,
+            collecttion: obj.collect
         }
         return userObj
     }
