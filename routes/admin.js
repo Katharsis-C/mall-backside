@@ -40,6 +40,7 @@ router.get("/getuser", async (ctx, next) => {
     let resList = []
     let createUser = obj => {
         let userObj = {
+            id: obj._id,
             account: obj.userID,
             nickName: obj.nickname,
             fullName: obj.userName,
@@ -50,7 +51,7 @@ router.get("/getuser", async (ctx, next) => {
             orderList: obj.orderList,
             comment: obj.comment,
             coupon: obj.coupon,
-            collecttion: obj.collect
+            collecttion: obj.collects
         }
         return userObj
     }
