@@ -5,28 +5,30 @@ const Spec = require("../models/specification")
 
 router.prefix("/goods")
 
+const createItem = function(obj) {
+    let itemObj = {
+        id: obj._id,
+        itemName: obj.itemName,
+        homeImg: obj.homeImg,
+        goodsImg: obj.goodsImg,
+        price: obj.price,
+        stock: obj.stock,
+        salesCount: obj.salesCount,
+        collectCount: obj.collectCount,
+        rateCount: obj.rateCount,
+        itemDetail: obj.itemDetail,
+        junior: obj.junior,
+        styleID: obj.styleID,
+        type: "",
+        styleList: null
+    }
+    return itemObj
+}
+
 router.get("/", async (ctx, next) => {
     let resList = []
 
-    let createItem = function(obj) {
-        let itemObj = {
-            id: obj._id,
-            itemName: obj.itemName,
-            homeImg: obj.homeImg,
-            goodsImg: obj.goodsImg,
-            price: obj.price,
-            stock: obj.stock,
-            salesCount: obj.salesCount,
-            collectCount: obj.collectCount,
-            rateCount: obj.rateCount,
-            itemDetail: obj.itemDetail,
-            junior: obj.junior,
-            styleID: obj.styleID,
-            type: "",
-            styleList: null
-        }
-        return itemObj
-    }
+
     await Goods.find({}).then(doc => {
         if (doc) {
             // console.log(doc)
@@ -138,6 +140,58 @@ router.delete("/", async (ctx, next) => {
             }
         }
     })
+})
+
+router.post("/search", async(ctx, next) => {
+    let resList = []
+
+    let {keyword} = ctx.request.body
+    if(!keyword) {
+        return next().then(() => {
+            ctx.response.body = {
+                code: "-1",
+                msg: "搜索关键字错误"
+            }
+        })
+    }
+    await Goods.find({itemName: keyword}).then(doc => {
+        if (doc) {
+            for (const item of doc) {
+                resList.push(createItem(item))
+            }
+        }
+    })
+
+    for (let element of resList) {
+        await Category.findOne(
+            { _id: element.junior },
+            { property: 0, category: 0 }
+        )
+            .populate("specs")
+            .then(doc => {
+                element.styleList = doc.specs
+            })
+
+        for (let style of element.styleID) {
+            await Spec.findOne(
+                { "specList._id": style },
+                { _id: 0, specType: 1, "specList.$": 1 }
+            ).then(doc => {
+                let _type = doc.specType
+                let sty = doc.specList[0].style
+                element.type += `${_type} ${sty} `
+            })
+        }
+    }
+
+    await next().then(() => {
+        ctx.response.body = {
+            code: "200",
+            msg: `搜索${keyword}`,
+            data: resList
+        }
+    })
+
 })
 
 module.exports = router
