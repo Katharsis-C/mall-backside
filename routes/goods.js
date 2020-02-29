@@ -41,12 +41,12 @@ router.get("/", async (ctx, next) => {
     for (let element of resList) {
         await Category.findOne(
             { _id: element.junior },
-            { property: 0, category: 0}
+            { property: 0, category: 0 }
         )
             .populate("specs")
             .then(doc => {
                 // console.log(doc)
-                element.styleList = (doc.specs)
+                element.styleList = doc.specs
             })
 
         for (let style of element.styleID) {
@@ -118,6 +118,23 @@ router.put("/", async (ctx, next) => {
                 code: "200",
                 msg: "修改商品信息成功"
                 // doc
+            }
+        }
+    })
+})
+
+router.delete("/", async (ctx, next) => {
+    await Goods.deleteOne({ _id: ctx.request.body }).then(doc => {
+        console.log(doc)
+        if (doc.deletedCount === 0) {
+            ctx.response.body = {
+                code: "404",
+                msg: "什么也没有删掉"
+            }
+        } else {
+            ctx.response.body = {
+                code: "200",
+                msg: "删除商品成功"
             }
         }
     })

@@ -5,6 +5,7 @@ const goodsSchema = mongoose.Schema(
         itemName: { type: String, required: true },
         homeImg: { type: String },
         goodsImg: { type: String },
+        price: {type: Number, required: true},
         stock: { type: Number, required: true },
         salesCount: { type: Number, required: true },
         collectCount: { type: Number, required: true },
