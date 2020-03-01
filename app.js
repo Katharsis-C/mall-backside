@@ -51,7 +51,7 @@ app.use(
     koaJwt({
         secret: "UMP45"
     }).unless({
-        path: [/^\/admin\/login/]
+        path: [/^\/admin\/login/, /^\/users\/login/, /^\/users\/[A-z]*register/]
     })
 )
 
@@ -90,9 +90,6 @@ app.use(async (ctx, next) => {
     })
 })
 
-
-
-
 //401
 app.use((ctx, next) => {
     return next().catch(err => {
@@ -105,7 +102,6 @@ app.use((ctx, next) => {
         }
     })
 })
-
 
 // routes
 app.use(index.routes(), index.allowedMethods())
