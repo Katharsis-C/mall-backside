@@ -10,7 +10,15 @@ const userSchema = mongoose.Schema({
     userTel: String,
     birth: String,
     comment: Array,
-    addressList: Array,
+    addressList: [{
+        receiver: String,
+        phone: Number,
+        province: String,
+        city: String,
+        district: String,
+        location: String,
+        isDefault: Boolean
+    }],
     orderList: [{itemName: String, itemStatus: String}],
     coupon: Array,
     collects: Array

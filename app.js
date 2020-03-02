@@ -47,13 +47,13 @@ app.use(async (ctx, next) => {
 })
 
 // // koa jwt
-app.use(
-    koaJwt({
-        secret: "UMP45"
-    }).unless({
-        path: [/^\/admin\/login/, /^\/users\/login/, /^\/users\/[A-z]*register/]
-    })
-)
+// app.use(
+//     koaJwt({
+//         secret: "UMP45"
+//     }).unless({
+//         path: [/^\/admin\/login/, /^\/users\/login/, /^\/users\/[A-z]*register/]
+//     })
+// )
 
 // verify token
 app.use(async (ctx, next) => {

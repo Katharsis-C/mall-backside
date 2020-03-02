@@ -8,7 +8,6 @@ const jwt = require("jsonwebtoken")
  */
 const secret = "UMP45"
 
-
 //连接数据库
 const DB_URL = "mongodb://localhost:27017/learning"
 mongoose.connect(DB_URL, {
@@ -95,7 +94,6 @@ router.post("/emailregister", async (ctx, next) => {
             })
         }
     })
-
 })
 
 router.post("/telregister", async (ctx, next) => {
@@ -128,6 +126,41 @@ router.post("/telregister", async (ctx, next) => {
                     msg: "该手机号码已注册"
                 }
             })
+        }
+    })
+})
+
+router.post("/address", async (ctx, next) => {
+    const createAddress = function(obj) {
+        let add = {
+            receiver: obj.receiver,
+            phone: obj.phone,
+            province: obj.province,
+            city: obj.city,
+            district: obj.district,
+            location: obj.location,
+            isDefault: false
+        }
+        return add
+    }
+    let req = ctx.request.body
+    let address = createAddress(req)
+    for(let key in address) {
+        if(typeof address[key] === 'undefined') {
+            return next().then(() => {
+                ctx.response.body = {
+                    code: "-1",
+                    msg: "填写错误"
+                }
+            })
+        }
+    }
+    await User.updateOne({_id: req.id}, {$push:{addressList: address}}).then(doc => {
+        if(doc.ok === 1 && doc.nModified !== 0) {
+            ctx.response.body = {
+                code: "200",
+                msg: "添加地址成功"
+            }
         }
     })
 })
