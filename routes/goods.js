@@ -28,7 +28,6 @@ const createItem = function(obj) {
 router.get("/", async (ctx, next) => {
     let resList = []
 
-
     await Goods.find({}).then(doc => {
         if (doc) {
             // console.log(doc)
@@ -142,11 +141,11 @@ router.delete("/", async (ctx, next) => {
     })
 })
 
-router.post("/search", async(ctx, next) => {
+router.post("/search", async (ctx, next) => {
     let resList = []
 
-    let {keyword} = ctx.request.body
-    if(!keyword) {
+    let { keyword } = ctx.request.body
+    if (!keyword) {
         return next().then(() => {
             ctx.response.body = {
                 code: "-1",
@@ -154,7 +153,7 @@ router.post("/search", async(ctx, next) => {
             }
         })
     }
-    await Goods.find({itemName: keyword}).then(doc => {
+    await Goods.find({ itemName: keyword }).then(doc => {
         if (doc) {
             for (const item of doc) {
                 resList.push(createItem(item))
@@ -191,7 +190,42 @@ router.post("/search", async(ctx, next) => {
             data: resList
         }
     })
-
 })
+
+router.get("/todayrecommend", async (ctx, next) => {
+    let createObj = obj => {
+        let tmp = {
+            id: obj._id,
+            img: obj.homeImg,
+            name: obj.itemName,
+            price: obj.price
+        }
+        return tmp
+    }
+    try {
+        await Goods.aggregate([{ $match: {} }, { $sample: { size: 3 } }]).then(
+            doc => {
+                let resList = []
+                for(const item of doc) {
+                    resList.push(createObj(item))
+                }
+                // console.log(resList)
+                return next().then(() => {
+                    ctx.response.body = {
+                        code: "200",
+                        msg: "获取成功",
+                        data: resList
+                    }
+                })
+            }
+        )
+    } catch {
+        ctx.response.body = {
+            code: "-1",
+            msg: "获取错误"
+        }
+    }
+})
+
 
 module.exports = router

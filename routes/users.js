@@ -10,6 +10,19 @@ const secret = "UMP45"
 
 //连接数据库
 const DB_URL = "mongodb://localhost:27017/learning"
+
+const checkAccount = function(account) {
+    const emailREG = /^\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/
+    const telREG = /^1[3-9][0-9]{9}$/
+    if (emailREG.test(account)) {
+        return 1
+    }
+    if (telREG.test(account)) {
+        return 2
+    }
+    return 0
+}
+
 mongoose.connect(DB_URL, {
     useNewUrlParser: true,
     useUnifiedTopology: true
@@ -61,6 +74,7 @@ router.post("/login", async (ctx, next) => {
     })
 })
 
+/* 
 router.post("/emailregister", async (ctx, next) => {
     let { email, password } = ctx.request.body
     if (!email || !password) {
@@ -101,7 +115,7 @@ router.post("/telregister", async (ctx, next) => {
     if (!tel || !password) {
         return next().then(() => {
             ctx.response.body = {
-                code: "-1",
+                code: " 1",
                 msg: "提交错误"
             }
         })
@@ -128,41 +142,103 @@ router.post("/telregister", async (ctx, next) => {
             })
         }
     })
-})
+}) 
+*/
 
-router.post("/address", async (ctx, next) => {
-    const createAddress = function(obj) {
-        let add = {
-            receiver: obj.receiver,
-            phone: obj.phone,
-            province: obj.province,
-            city: obj.city,
-            district: obj.district,
-            location: obj.location,
-            isDefault: false
-        }
-        return add
+router.post("/register", async (ctx, next) => {
+    const registerByEmail = async function(email, password) {
+        await User.findOne({ userEmail: email }).then(doc => {
+            if (!doc) {
+                let newUser = new User({
+                    userEmail: email,
+                    userPassword: password
+                })
+                newUser.save().then(doc)
+                return next().then(() => {
+                    ctx.response.body = {
+                        code: "200",
+                        msg: "注册成功"
+                    }
+                })
+            } else {
+                return next().then(() => {
+                    ctx.response.body = {
+                        code: "401",
+                        msg: "该邮箱已注册"
+                    }
+                })
+            }
+        })
     }
-    let req = ctx.request.body
-    let address = createAddress(req)
-    for(let key in address) {
-        if(typeof address[key] === 'undefined') {
+
+    const registerByTel = async function(tel, password) {
+        await User.findOne({ userTel: tel }).then(doc => {
+            if (!doc) {
+                let newUser = new User({
+                    userTel: tel,
+                    userPassword: password
+                })
+                newUser.save()
+                return next().then(() => {
+                    ctx.response.body = {
+                        code: "200",
+                        msg: "注册成功"
+                    }
+                })
+            } else {
+                return next().then(() => {
+                    ctx.response.body = {
+                        code: "401",
+                        msg: "该手机号码已注册"
+                    }
+                })
+            }
+        })
+    }
+
+    let { account, password } = ctx.request.body
+    if (!account || !password) {
+        return next().then(() => {
+            ctx.response.body = {
+                code: "0",
+                msg: "输入有遗漏"
+            }
+        })
+    }
+    switch (checkAccount(account)) {
+        case 1:
+            await registerByEmail(account, password)
+            break
+        case 2:
+            await registerByTel(account, password)
+            break
+        default:
             return next().then(() => {
                 ctx.response.body = {
                     code: "-1",
-                    msg: "填写错误"
+                    msg: "输入错误"
                 }
             })
-        }
     }
-    await User.updateOne({_id: req.id}, {$push:{addressList: address}}).then(doc => {
-        if(doc.ok === 1 && doc.nModified !== 0) {
-            ctx.response.body = {
-                code: "200",
-                msg: "添加地址成功"
-            }
-        }
-    })
 })
 
+router.post("/info", async (ctx, next) => {
+    let { id, nickname, name, gender, birth, tel, email } = ctx.request.body
+    let data = {
+        nickname: nickname,
+        userName: name,
+        userSex: gender,
+        birth: birth,
+        userTel: tel,
+        userEmail: email
+    }
+    try {
+        await User.updateOne({ _id: id }, data).then(doc => {})
+    } catch (error) {
+        ctx.response.body = {
+            code: "-1",
+            msg: "修改错误"
+        }
+    }
+})
 module.exports = router

@@ -15,6 +15,7 @@ const news = require("./routes/news")
 const goods = require("./routes/goods")
 const category = require("./routes/category")
 const admin = require("./routes/admin")
+const address = require("./routes/address")
 
 // error handler
 onerror(app)
@@ -110,6 +111,7 @@ app.use(news.routes(), index.allowedMethods())
 app.use(goods.routes(), index.allowedMethods())
 app.use(category.routes(), index.allowedMethods())
 app.use(admin.routes(), index.allowedMethods())
+app.use(address.routes(), index.allowedMethods())
 
 // error-handling
 app.on("error", (err, ctx) => {
