@@ -55,14 +55,10 @@ router.post("/login", async (ctx, next) => {
                     expiresIn: "1h"
                 })
                 ctx.response.body = {
-                    code: 1,
-                    message: `${reqAccount} 登录成功`,
-                    user: {
-                        code: "200",
-                        msg: "登录成功",
-                        userID: doc._id,
-                        token: token
-                    }
+                    code: "200",
+                    msg: "登录成功",
+                    userID: doc._id,
+                    token: token
                 }
             } else {
                 ctx.response.body = {
