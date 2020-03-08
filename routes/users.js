@@ -60,7 +60,7 @@ router.post("/login", async (ctx, next) => {
                     user: {
                         code: "200",
                         msg: "登录成功",
-                        user: doc,
+                        userID: doc._id,
                         token: token
                     }
                 }

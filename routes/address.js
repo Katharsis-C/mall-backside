@@ -3,7 +3,20 @@
 const router = require("koa-router")()
 const User = require("../models/user")
 
-router.post("/address", async (ctx, next) => {
+router.prefix("/address")
+
+router.post("/", async (ctx, next) => {
+    let { id } = ctx.request.body
+    await User.findOne({ _id: id }).then(doc => {
+        ctx.response.body = {
+            code: "200",
+            msg: "地址列表请求成功",
+            data: doc.addressList
+        }
+    })
+})
+
+router.post("/", async (ctx, next) => {
     const createAddress = function(obj) {
         let add = {
             receiver: obj.receiver,
@@ -41,15 +54,19 @@ router.post("/address", async (ctx, next) => {
     })
 })
 
-router.delete("/address", async(ctx, next) => {
-    let {id} = ctx.request.body
-    if(!id) return next().then(() => {
-        ctx.response.body = {
-            code: "-1",
-            msg: "删除出错"
-        }
-    })
-    await User.updateOne({"addressList._id": id},{$pull:{addressList:{_id: id}}}).then(doc => {
+router.delete("/", async (ctx, next) => {
+    let { id } = ctx.request.body
+    if (!id)
+        return next().then(() => {
+            ctx.response.body = {
+                code: "-1",
+                msg: "删除出错"
+            }
+        })
+    await User.updateOne(
+        { "addressList._id": id },
+        { $pull: { addressList: { _id: id } } }
+    ).then(doc => {
         if (doc.deletedCount !== 0) {
             ctx.response.body = {
                 code: "200",
@@ -61,9 +78,7 @@ router.delete("/address", async(ctx, next) => {
                 msg: "没有要删除的地址"
             }
         }
-
     })
 })
-
 
 module.exports = router
