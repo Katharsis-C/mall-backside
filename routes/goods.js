@@ -28,16 +28,19 @@ const createItem = function(obj) {
 router.get("/", async (ctx, next) => {
     let resList = []
 
-    await Goods.find({}).then(doc => {
-        if (doc) {
-            // console.log(doc)
-            for (const item of doc) {
+    await Goods.find({})
+
+        .limit(3)
+        .then(doc => {
+            if (doc) {
                 // console.log(doc)
-                resList.push(createItem(item))
+                for (const item of doc) {
+                    // console.log(doc)
+                    resList.push(createItem(item))
+                }
+                // console.log(doc)
             }
-            // console.log(doc)
-        }
-    })
+        })
 
     for (let element of resList) {
         await Category.findOne(
@@ -45,6 +48,7 @@ router.get("/", async (ctx, next) => {
             { property: 0, category: 0 }
         )
             .populate("specs")
+
             .then(doc => {
                 // console.log(doc)
                 element.styleList = doc.specs
@@ -141,8 +145,6 @@ router.delete("/", async (ctx, next) => {
     })
 })
 
-
-
 router.get("/todayrecommend", async (ctx, next) => {
     let createObj = obj => {
         let tmp = {
@@ -157,7 +159,7 @@ router.get("/todayrecommend", async (ctx, next) => {
         await Goods.aggregate([{ $match: {} }, { $sample: { size: 3 } }]).then(
             doc => {
                 let resList = []
-                for(const item of doc) {
+                for (const item of doc) {
                     resList.push(createObj(item))
                 }
                 // console.log(resList)
@@ -177,6 +179,7 @@ router.get("/todayrecommend", async (ctx, next) => {
         }
     }
 })
+
 
 
 module.exports = router

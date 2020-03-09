@@ -83,16 +83,62 @@ router.post("/admingoods", async (ctx, next) => {
 
 router.post("/home", async (ctx, next) => {
     let { keyword } = ctx.request.body
-    await Category.find({ property: new RegExp(keyword) }, { specs: 0 , category: 0})
-    .limit(10)
-    .then(
-        doc => {
+    await Category.find(
+        { property: new RegExp(keyword) },
+        { specs: 0, category: 0 }
+    )
+        .limit(10)
+        .then(doc => {
             ctx.response.body = {
                 code: "200",
                 data: doc
             }
-        }
-    )
+        })
+})
+
+router.get("/goodslist", async (ctx, next) => {
+    let { id, keyword, page } = ctx.query
+    const projection = {
+        goodsImg: 0,
+        stock: 0,
+        collectCount: 0,
+        rateCount: 0,
+        itemDetail: 0,
+        junior: 0,
+        styleID: 0
+    }
+    if (id) {
+        await Goods.find({ junior: id }, projection)
+            .skip((page - 1) * 12)
+            .limit(12)
+            .then(doc => {
+                return next().then(() => {
+                    ctx.response.body = {
+                        code: "200",
+                        data: doc
+                    }
+                })
+            })
+    } else if (keyword) {
+        await Goods.find({ itemName: new RegExp(keyword) }, projection)
+            .skip((page - 1) * 12)
+            .limit(12)
+            .then(doc => {
+                return next().then(() => {
+                    ctx.response.body = {
+                        code: "200",
+                        data: doc
+                    }
+                })
+            })
+    } else {
+        return next().then(() => {
+            ctx.response.body = {
+                code: "404",
+                data: []
+            }
+        })
+    }
 })
 
 module.exports = router
