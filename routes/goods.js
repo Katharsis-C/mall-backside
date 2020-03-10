@@ -180,6 +180,18 @@ router.get("/todayrecommend", async (ctx, next) => {
     }
 })
 
+router.get("/item", async (ctx, next) => {
+    let {id} = ctx.query
+    if(!id) {
+        return next()
+    }
+    await Goods.findOne({_id: id}).then(doc => {
+        ctx.response.body = {
+            code: "200",
+            data: doc
+        }
+    })
+})
 
 
 module.exports = router

@@ -81,8 +81,16 @@ router.post("/admingoods", async (ctx, next) => {
     })
 })
 
-router.post("/home", async (ctx, next) => {
-    let { keyword } = ctx.request.body
+router.get("/home", async (ctx, next) => {
+    let { keyword } = ctx.query
+    if(!keyword){
+        return next().then(() => {
+            ctx.response.body = {
+                code: "404",
+                msg:"什么也没有"
+            }
+        })
+    }
     await Category.find(
         { property: new RegExp(keyword) },
         { specs: 0, category: 0 }
