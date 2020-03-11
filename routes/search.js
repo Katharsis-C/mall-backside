@@ -7,6 +7,7 @@ const Spec = require("../models/specification")
 
 router.prefix("/search")
 
+//后台管理员搜索用户列表
 router.post("/adminusers", async (ctx, next) => {
     let { keyword } = ctx.request.body
     if (!keyword) {
@@ -30,6 +31,7 @@ router.post("/adminusers", async (ctx, next) => {
     })
 })
 
+//后台管理员搜索商品列表
 router.post("/admingoods", async (ctx, next) => {
     let resList = []
 
@@ -81,18 +83,19 @@ router.post("/admingoods", async (ctx, next) => {
     })
 })
 
+//前台搜索栏
 router.get("/home", async (ctx, next) => {
     let { keyword } = ctx.query
-    if(!keyword){
+    if (!keyword) {
         return next().then(() => {
             ctx.response.body = {
                 code: "404",
-                msg:"什么也没有"
+                msg: "什么也没有"
             }
         })
     }
     await Category.find(
-        { property: new RegExp(keyword) },
+        { property: new RegExp(`^${keyword}`) },
         { specs: 0, category: 0 }
     )
         .limit(10)
@@ -104,6 +107,7 @@ router.get("/home", async (ctx, next) => {
         })
 })
 
+//前台搜索商品
 router.get("/goodslist", async (ctx, next) => {
     let { id, keyword, page } = ctx.query
     const projection = {
@@ -116,6 +120,13 @@ router.get("/goodslist", async (ctx, next) => {
         styleID: 0
     }
     if (id) {
+        let total = 0
+        await Goods.countDocuments(
+            { junior: id },
+            (err, count) => {
+                total = count
+            }
+        )
         await Goods.find({ junior: id }, projection)
             .skip((page - 1) * 12)
             .limit(12)
@@ -123,19 +134,29 @@ router.get("/goodslist", async (ctx, next) => {
                 return next().then(() => {
                     ctx.response.body = {
                         code: "200",
-                        data: doc
+                        data: doc,
+                        total: total
                     }
                 })
             })
     } else if (keyword) {
+        let total = 0
+        await Goods.countDocuments(
+            { itemName: new RegExp(keyword) },
+            (err, count) => {
+                total = count
+            }
+        )
         await Goods.find({ itemName: new RegExp(keyword) }, projection)
+            .sort({ itemName: 1 })
             .skip((page - 1) * 12)
             .limit(12)
             .then(doc => {
                 return next().then(() => {
                     ctx.response.body = {
                         code: "200",
-                        data: doc
+                        data: doc,
+                        total: total
                     }
                 })
             })

@@ -19,6 +19,7 @@ const userSchema = mongoose.Schema({
         location: String,
         isDefault: Boolean
     }],
+    avatarPath: String,
     orderList: [{itemName: String, itemStatus: String}],
     coupon: Array,
     collects: Array

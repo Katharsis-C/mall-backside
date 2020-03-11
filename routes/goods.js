@@ -25,12 +25,12 @@ const createItem = function(obj) {
     return itemObj
 }
 
+//后台获取商品列表
 router.get("/", async (ctx, next) => {
     let resList = []
 
     await Goods.find({})
 
-        .limit(3)
         .then(doc => {
             if (doc) {
                 // console.log(doc)
@@ -77,6 +77,7 @@ router.get("/", async (ctx, next) => {
     })
 })
 
+//后台添加商品
 router.post("/", async (ctx, next) => {
     let req = ctx.request.body
     if (JSON.stringify(req) === "{}") {
@@ -104,6 +105,7 @@ router.post("/", async (ctx, next) => {
         })
 })
 
+//后台修改商品
 router.put("/", async (ctx, next) => {
     let req = ctx.request.body
     let id = ctx.request.body.id
@@ -128,6 +130,7 @@ router.put("/", async (ctx, next) => {
     })
 })
 
+//后台删除商品
 router.delete("/", async (ctx, next) => {
     await Goods.deleteOne({ _id: ctx.request.body }).then(doc => {
         // console.log(doc)
@@ -145,6 +148,7 @@ router.delete("/", async (ctx, next) => {
     })
 })
 
+//前台首页 随机商品
 router.get("/todayrecommend", async (ctx, next) => {
     let createObj = obj => {
         let tmp = {
@@ -180,18 +184,44 @@ router.get("/todayrecommend", async (ctx, next) => {
     }
 })
 
+//前台商品页
 router.get("/item", async (ctx, next) => {
-    let {id} = ctx.query
-    if(!id) {
+    let item = null
+    let styleArr = []
+    let styleMap = new Map()
+    let { id } = ctx.query
+    if (!id) {
         return next()
     }
-    await Goods.findOne({_id: id}).then(doc => {
+    await Goods.findOne({ _id: id }).then(doc => {
+        item = doc
+    })
+    await next().then(async () => {
+        // console.log(item)
+        for (const style of item.styleID) {
+            await Spec.findOne(
+                { "specList._id": style },
+                { specType: 1, _id: 0, "specList.$": 1 }
+            ).then(doc => {
+                console.log(doc)
+                if(!styleMap.has(doc.specType)) {
+                    styleMap.set(doc.specType, doc.specList[0].style)
+                } else {
+                    let tmp = styleMap.get(doc.specType)
+                    styleMap.set(doc.specType, `${tmp} ${doc.specList[0].style}`)
+                }
+            })
+        }
+        console.log(styleMap)
+        for(const [key,value] of styleMap) {
+            styleArr.push({type: key, style: value.split(" ")})
+        }
+        item.styleID = styleArr
         ctx.response.body = {
             code: "200",
-            data: doc
+            data: item
         }
     })
 })
-
 
 module.exports = router

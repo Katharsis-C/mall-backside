@@ -2,6 +2,9 @@ const router = require("koa-router")()
 const mongoose = require("mongoose")
 const User = require("../models/user")
 const jwt = require("jsonwebtoken")
+const useMulter = require("../public/javascripts/koamultr")
+
+const upload = useMulter("avatar")
 
 /**
  * JWT secret
@@ -58,6 +61,10 @@ router.post("/login", async (ctx, next) => {
                     code: "200",
                     msg: "登录成功",
                     userID: doc._id,
+                    userAvatar: `http:127.0.0.1:3000${doc.avatarPath.replace(
+                        /-/g,
+                        `\/`
+                    )}`,
                     token: token
                 }
             } else {
@@ -69,77 +76,6 @@ router.post("/login", async (ctx, next) => {
         }
     })
 })
-
-/* 
-router.post("/emailregister", async (ctx, next) => {
-    let { email, password } = ctx.request.body
-    if (!email || !password) {
-        return next().then(() => {
-            ctx.response.body = {
-                code: "-1",
-                msg: "提交错误"
-            }
-        })
-    }
-
-    await User.findOne({ userEmail: email }).then(doc => {
-        if (!doc) {
-            let newUser = new User({
-                userEmail: email,
-                userPassword: password
-            })
-            newUser.save()
-            return next().then(() => {
-                ctx.response.body = {
-                    code: "200",
-                    msg: "注册成功"
-                }
-            })
-        } else {
-            return next().then(() => {
-                ctx.response.body = {
-                    code: "0",
-                    msg: "该邮箱已注册"
-                }
-            })
-        }
-    })
-})
-
-router.post("/telregister", async (ctx, next) => {
-    let { tel, password } = ctx.request.body
-    if (!tel || !password) {
-        return next().then(() => {
-            ctx.response.body = {
-                code: " 1",
-                msg: "提交错误"
-            }
-        })
-    }
-    await User.findOne({ userTel: tel }).then(doc => {
-        if (!doc) {
-            let newUser = new User({
-                userTel: tel,
-                userPassword: password
-            })
-            newUser.save()
-            return next().then(() => {
-                ctx.response.body = {
-                    code: "200",
-                    msg: "注册成功"
-                }
-            })
-        } else {
-            return next().then(() => {
-                ctx.response.body = {
-                    code: "0",
-                    msg: "该手机号码已注册"
-                }
-            })
-        }
-    })
-}) 
-*/
 
 router.post("/register", async (ctx, next) => {
     const registerByEmail = async function(email, password) {
@@ -218,18 +154,29 @@ router.post("/register", async (ctx, next) => {
     }
 })
 
-router.post("/info", async (ctx, next) => {
+router.post("/info", upload.single("avatar"), async (ctx, next) => {
+    ctx.body = "info"
     let { id, nickname, name, gender, birth, tel, email } = ctx.request.body
+    let pic = ctx.request.file
+    console.log(ctx.request.body)
+    let tmpPath = pic.path.replace(new RegExp("public"), "")
+    let savePath = tmpPath.replace(/\\/g, "-")
     let data = {
         nickname: nickname,
         userName: name,
         userSex: gender,
         birth: birth,
         userTel: tel,
-        userEmail: email
+        userEmail: email,
+        avatarPath: savePath
     }
     try {
-        await User.updateOne({ _id: id }, data).then(doc => {})
+        await User.updateOne({ _id: id }, data).then(doc => {
+            ctx.response.body = {
+                code: "200",
+                msg: "修改成功"
+            }
+        })
     } catch (error) {
         ctx.response.body = {
             code: "-1",
@@ -237,4 +184,85 @@ router.post("/info", async (ctx, next) => {
         }
     }
 })
+
+router.get("/avatar", async (ctx, next) => {
+    let { id } = ctx.query
+    await User.findOne({ _id: id }).then(doc => {
+        console.log(decodeURIComponent(doc.avatarPath))
+        ctx.response.body = {
+            avatar: `http:127.0.0.1:3000${doc.avatarPath.replace(/-/g, `\/`)}`
+        }
+    })
+})
+
 module.exports = router
+
+/* 
+router.post("/emailregister", async (ctx, next) => {
+    let { email, password } = ctx.request.body
+    if (!email || !password) {
+        return next().then(() => {
+            ctx.response.body = {
+                code: "-1",
+                msg: "提交错误"
+            }
+        })
+    }
+
+    await User.findOne({ userEmail: email }).then(doc => {
+        if (!doc) {
+            let newUser = new User({
+                userEmail: email,
+                userPassword: password
+            })
+            newUser.save()
+            return next().then(() => {
+                ctx.response.body = {
+                    code: "200",
+                    msg: "注册成功"
+                }
+            })
+        } else {
+            return next().then(() => {
+                ctx.response.body = {
+                    code: "0",
+                    msg: "该邮箱已注册"
+                }
+            })
+        }
+    })
+})
+
+router.post("/telregister", async (ctx, next) => {
+    let { tel, password } = ctx.request.body
+    if (!tel || !password) {
+        return next().then(() => {
+            ctx.response.body = {
+                code: " 1",
+                msg: "提交错误"
+            }
+        })
+    }
+    await User.findOne({ userTel: tel }).then(doc => {
+        if (!doc) {
+            let newUser = new User({
+                userTel: tel,
+                userPassword: password
+            })
+            newUser.save()
+            return next().then(() => {
+                ctx.response.body = {
+                    code: "200",
+                    msg: "注册成功"
+                }
+            })
+        } else {
+            return next().then(() => {
+                ctx.response.body = {
+                    code: "0",
+                    msg: "该手机号码已注册"
+                }
+            })
+        }
+    })
+})  */

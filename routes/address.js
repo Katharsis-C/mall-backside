@@ -1,4 +1,4 @@
-// 用户的地址api
+// 用户的地址
 
 const router = require("koa-router")()
 const User = require("../models/user")
