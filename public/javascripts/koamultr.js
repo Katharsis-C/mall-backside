@@ -7,7 +7,12 @@ module.exports = function(dir) {
             cb(null, `public/images/${dir}`)
         },
         filename: function(req, file, cb) {
-            let id = req.body.id
+            let id = null
+            if(req.body.id) {
+                id = req.body.id
+            } else {
+                id = req.body._id
+            }
             let fileFormat = file.originalname.split(".")
             cb(null, `${id}.${fileFormat[fileFormat.length - 1]}`)
         }

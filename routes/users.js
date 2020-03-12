@@ -41,6 +41,7 @@ router.get("/", function(ctx, next) {
     ctx.body = "this is a users response!"
 })
 
+//登录
 router.post("/login", async (ctx, next) => {
     reqAccount = ctx.request.body.account
     reqPWD = ctx.request.body.password
@@ -77,6 +78,7 @@ router.post("/login", async (ctx, next) => {
     })
 })
 
+//用户注册
 router.post("/register", async (ctx, next) => {
     const registerByEmail = async function(email, password) {
         await User.findOne({ userEmail: email }).then(doc => {
@@ -154,11 +156,40 @@ router.post("/register", async (ctx, next) => {
     }
 })
 
+router.get("/info", async (ctx, next) => {
+    let { id } = ctx.query
+    if (!id) {
+        return next().then(() => {
+            ctx.response.body = {
+                code: "-1",
+                msg: "请求发生错误"
+            }
+        })
+    } else {
+        const projection = {
+            _id: 0,
+            comment: 0,
+            addressList: 0,
+            orderList: 0,
+            coupon: 0,
+            collects: 0
+        }
+        await User.findOne({ _id: id }, projection).then(doc => {
+            doc.avatarPath = doc.avatarPath.replace(/-/g, `\/`)
+            ctx.response.body = {
+                code: "200",
+                data: doc
+            }
+        })
+    }
+})
+
+//修改用户信息
 router.post("/info", upload.single("avatar"), async (ctx, next) => {
     ctx.body = "info"
     let { id, nickname, name, gender, birth, tel, email } = ctx.request.body
     let pic = ctx.request.file
-    console.log(ctx.request.body)
+    // console.log(ctx.request.body)
     let tmpPath = pic.path.replace(new RegExp("public"), "")
     let savePath = tmpPath.replace(/\\/g, "-")
     let data = {
@@ -185,17 +216,17 @@ router.post("/info", upload.single("avatar"), async (ctx, next) => {
     }
 })
 
-router.get("/avatar", async (ctx, next) => {
-    let { id } = ctx.query
-    await User.findOne({ _id: id }).then(doc => {
-        console.log(decodeURIComponent(doc.avatarPath))
-        ctx.response.body = {
-            avatar: `http:127.0.0.1:3000${doc.avatarPath.replace(/-/g, `\/`)}`
-        }
-    })
-})
-
 module.exports = router
+
+// router.get("/avatar", async (ctx, next) => {
+//     let { id } = ctx.query
+//     await User.findOne({ _id: id }).then(doc => {
+//         console.log(decodeURIComponent(doc.avatarPath))
+//         ctx.response.body = {
+//             avatar: `http:127.0.0.1:3000${doc.avatarPath.replace(/-/g, `\/`)}`
+//         }
+//     })
+// })
 
 /* 
 router.post("/emailregister", async (ctx, next) => {

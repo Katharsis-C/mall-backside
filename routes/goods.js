@@ -28,9 +28,10 @@ const createItem = function(obj) {
 //后台获取商品列表
 router.get("/", async (ctx, next) => {
     let resList = []
-
+    let {page} = ctx.query
     await Goods.find({})
-
+        .skip((page - 1) * 10)
+        .limit(10)
         .then(doc => {
             if (doc) {
                 // console.log(doc)
