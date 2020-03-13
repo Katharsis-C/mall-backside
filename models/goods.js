@@ -12,7 +12,11 @@ const goodsSchema = mongoose.Schema(
         rateCount: { type: Number, required: true },
         itemDetail: { type: String, required: true },
         junior: { type: String, required: true },
-        styleID: { type: Array, required: true }
+        styleID: { type: Array, required: true },
+        comment: [{
+            userName: String,
+            content: String
+        }]
     },
     { versionKey: false }
 )

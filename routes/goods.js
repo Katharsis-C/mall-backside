@@ -191,6 +191,7 @@ router.get("/item", async (ctx, next) => {
     let styleArr = []
     let styleMap = new Map()
     let { id } = ctx.query
+    console.log(id)
     if (!id) {
         return next()
     }

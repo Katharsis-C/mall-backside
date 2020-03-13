@@ -62,6 +62,7 @@ router.post("/login", async (ctx, next) => {
                     code: "200",
                     msg: "登录成功",
                     userID: doc._id,
+                    nickname: doc.nickname,
                     userAvatar: `http:127.0.0.1:3000${doc.avatarPath.replace(
                         /-/g,
                         `\/`
@@ -214,6 +215,38 @@ router.post("/info", upload.single("avatar"), async (ctx, next) => {
             msg: "修改错误"
         }
     }
+})
+
+//修改密码
+router.post("/password", async (ctx, next) => {
+    let { id, oldPW, newPW } = ctx.request.body
+    if (!oldPW || !newPW || !id) {
+        return next().then(() => {
+            ctx.response.body = {
+                code: "-1",
+                msg: "输入错误"
+            }
+        })
+    }
+    await User.findOne({ _id: id }).then(async doc => {
+        console.log(oldPW, doc.userPassword)
+        if (oldPW === doc.userPassword) {
+            await User.updateOne({ _id: id }, { userPassword: newPW })
+            return next().then(() => {
+                ctx.response.body = {
+                    code: "200",
+                    msg: "修改成功"
+                }
+            })
+        } else {
+            return next().then(() => {
+                ctx.response.body = {
+                    code: "0",
+                    msg: "密码错误"
+                }
+            })
+        }
+    })
 })
 
 module.exports = router

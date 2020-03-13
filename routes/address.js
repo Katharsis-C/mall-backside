@@ -5,8 +5,8 @@ const User = require("../models/user")
 
 router.prefix("/address")
 
-router.post("/", async (ctx, next) => {
-    let { id } = ctx.request.body
+router.get("/", async (ctx, next) => {
+    let { id } = ctx.query
     await User.findOne({ _id: id }).then(doc => {
         ctx.response.body = {
             code: "200",

@@ -9,7 +9,10 @@ const userSchema = mongoose.Schema({
     userSex: String,
     userTel: String,
     birth: String,
-    comment: Array,
+    comment: [{
+        itemName: String,
+        content: String
+    }],
     addressList: [{
         receiver: String,
         phone: Number,
