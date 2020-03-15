@@ -5,17 +5,30 @@ const User = require("../models/user")
 
 router.prefix("/address")
 
+//获取用户地址 需用户id
 router.get("/", async (ctx, next) => {
     let { id } = ctx.query
-    await User.findOne({ _id: id }).then(doc => {
-        ctx.response.body = {
-            code: "200",
-            msg: "地址列表请求成功",
-            data: doc.addressList
-        }
-    })
+    console.log(id)
+    try {
+        await User.findOne({ _id: id }).then(doc => {
+            ctx.response.body = {
+                code: "200",
+                msg: "地址列表请求成功",
+                data: doc.addressList
+            }
+        })
+    } catch (error) {
+        return next().then(() => {
+            ctx.response.body = {
+                code: "-1",
+                msg: "address error",
+            }
+        })
+    }
+
 })
 
+//添加用户地址 需用户id
 router.post("/", async (ctx, next) => {
     const createAddress = function(obj) {
         let add = {
@@ -54,6 +67,7 @@ router.post("/", async (ctx, next) => {
     })
 })
 
+//删除地址 需地址id
 router.delete("/", async (ctx, next) => {
     let { id } = ctx.request.body
     if (!id)
@@ -67,7 +81,7 @@ router.delete("/", async (ctx, next) => {
         { "addressList._id": id },
         { $pull: { addressList: { _id: id } } }
     ).then(doc => {
-        if (doc.deletedCount !== 0) {
+        if (doc.nModified !== 0) {
             ctx.response.body = {
                 code: "200",
                 msg: "删除地址成功"

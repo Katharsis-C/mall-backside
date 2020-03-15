@@ -16,6 +16,7 @@ router.get("/getnews", async (ctx, next) => {
     let { page } = ctx.query
     await News.find({})
         .skip((page - 1) * 10)
+        .sort({_id: -1})
         .limit(10)
         .then(doc => {
             if (doc) {

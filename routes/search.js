@@ -86,6 +86,7 @@ router.post("/admingoods", async (ctx, next) => {
 //前台搜索栏
 router.get("/home", async (ctx, next) => {
     let { keyword } = ctx.query
+    console.log(keyword)
     if (!keyword) {
         return next().then(() => {
             ctx.response.body = {
@@ -117,7 +118,8 @@ router.get("/goodslist", async (ctx, next) => {
         rateCount: 0,
         itemDetail: 0,
         junior: 0,
-        styleID: 0
+        styleID: 0,
+        comment: 0
     }
     if (id) {
         let total = 0

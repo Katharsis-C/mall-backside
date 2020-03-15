@@ -214,7 +214,7 @@ router.get("/item", async (ctx, next) => {
                 }
             })
         }
-        console.log(styleMap)
+        // console.log(styleMap)
         for(const [key,value] of styleMap) {
             styleArr.push({type: key, style: value.split(" ")})
         }

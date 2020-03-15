@@ -18,6 +18,8 @@ const admin = require("./routes/admin")
 const address = require("./routes/address")
 const search = require("./routes/search")
 const comment = require("./routes/comment")
+const collect = require("./routes/collect")
+const order = require("./routes/order")
 
 // error handler
 onerror(app)
@@ -116,6 +118,9 @@ app.use(admin.routes(), index.allowedMethods())
 app.use(address.routes(), index.allowedMethods())
 app.use(search.routes(), index.allowedMethods())
 app.use(comment.routes(), index.allowedMethods())
+app.use(collect.routes(), index.allowedMethods())
+app.use(order.routes(), index.allowedMethods())
+
 
 // error-handling
 app.on("error", (err, ctx) => {
