@@ -12,6 +12,7 @@ const userSchema = mongoose.Schema(
         birth: String,
         comment: [
             {
+                itemImg: String,
                 itemName: String,
                 content: String
             }

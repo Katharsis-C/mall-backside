@@ -21,11 +21,10 @@ router.get("/", async (ctx, next) => {
         return next().then(() => {
             ctx.response.body = {
                 code: "-1",
-                msg: "address error",
+                msg: "address error"
             }
         })
     }
-
 })
 
 //添加用户地址 需用户id

@@ -11,9 +11,21 @@ router.get("/", (ctx, next) => {
     ctx.response.body = "this news api"
 })
 
+const date = new Date()
+
+const current = `${date.getFullYear()}-${date.getMonth() +
+    1}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`
+
 //获取新闻
 router.get("/getnews", async (ctx, next) => {
-    let { page } = ctx.query
+    let { page } = ctx.query,
+        total = 0
+    console.log(News.estimatedDocumentCount((err, count) => {
+        if(err) {
+        } else {
+            total = count
+        }
+    }))
     await News.find({})
         .skip((page - 1) * 10)
         .sort({_id: -1})
@@ -30,6 +42,7 @@ router.get("/getnews", async (ctx, next) => {
                 ctx.response.body = {
                     code: "200",
                     msg: "获取新闻成功",
+                    total: total,
                     doc
                 }
             }
@@ -45,7 +58,10 @@ router.post("/" ,async (ctx, next) => {
     let news = new News({
         title: reqTitle,
         content: reqContent,
+        time: current,
+        picture: 'no'
     })
+
 
     await news.save().then(doc => {
         ctx.response.body = {
@@ -61,6 +77,7 @@ router.put("/", upload.single("picture") ,async (ctx, next) => {
     let pic = ctx.request.file
     let savePath = pic.path.replace(new RegExp("public"), "").replace(/\\/g, "-")
     let news = {
+        time: current,
         _id: _id,
         title: title,
         content: content,
@@ -68,7 +85,7 @@ router.put("/", upload.single("picture") ,async (ctx, next) => {
     }
     await News.updateOne(
         { _id: news._id },
-        { title: news.title, content: news.content, picture: news.picture }
+        { time: news.time, title: news.title, content: news.content, picture: news.picture }
     ).then(doc => {
         if (doc.nModified !== 0) {
             ctx.response.body = {

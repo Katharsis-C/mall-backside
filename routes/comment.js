@@ -5,23 +5,24 @@ const User = require("../models/user")
 router.prefix("/comment")
 
 router.get("/", async (ctx, next) => {
-    let { id } = ctx.query, resList = []
-    await User.findOne({_id: id}).then(doc => {
-        if(doc) {
-            for(let item of doc.comment) {
+    let { id } = ctx.query,
+        resList = []
+    await User.findOne({ _id: id }).then(doc => {
+        if (doc) {
+            for (let item of doc.comment) {
                 resList.push(item)
             }
         }
     })
-    await Goods.findOne({_id: id}).then(doc => {
-        if(doc) {
-            for(let item of doc.comment) {
+    await Goods.findOne({ _id: id }).then(doc => {
+        if (doc) {
+            for (let item of doc.comment) {
                 resList.push(item)
             }
         }
     })
     await next().then(() => {
-        ctx.response.body ={ 
+        ctx.response.body = {
             code: "200",
             data: resList
         }
@@ -38,17 +39,19 @@ router.post("/", async (ctx, next) => {
             }
         })
     }
-    let [userName, itemName] = [null, null]
+    let [userName, itemName, itemImg] = [null, null, null]
     await User.findOne({ _id: userID }).then(doc => {
         // console.log(doc)
         userName = doc.nickname
     })
     await Goods.findOne({ _id: itemID }).then(doc => {
         // console.log(doc)
+        itemImg = doc.homeImg
         itemName = doc.itemName
     })
     // console.log(userName, itemName, comment)
     let commentInUser = {
+        itemImg: `http:127.0.0.1:3000${itemImg.replace(/-/g, `\/`)}`,
         itemName: itemName,
         content: comment
     }
