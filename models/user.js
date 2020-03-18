@@ -19,13 +19,7 @@ const userSchema = mongoose.Schema(
         ],
         addressList: [
             {
-                receiver: String,
-                phone: Number,
-                province: String,
-                city: String,
-                district: String,
-                location: String,
-                isDefault: Boolean
+                type: mongoose.Types.ObjectId, ref :"Address"
             }
         ],
         avatarPath: String,
