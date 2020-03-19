@@ -25,6 +25,7 @@ const userSchema = mongoose.Schema(
         avatarPath: String,
         order: [{type: mongoose.Types.ObjectId, ref: "Order"}],
         coupon: Array,
+        pay: String,
         collects: [{type: mongoose.Types.ObjectId, ref: "Goods"}]
     },
     { versionKey: false }

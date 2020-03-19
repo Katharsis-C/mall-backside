@@ -86,7 +86,9 @@ router.post("/register", async (ctx, next) => {
             if (!doc) {
                 let newUser = new User({
                     userEmail: email,
-                    userPassword: password
+                    userPassword: password,
+                    avatarPath: `-images-avatar-default.jpg`,
+                    pay: "000000"
                 })
                 newUser.save().then(doc)
                 return next().then(() => {
@@ -111,7 +113,9 @@ router.post("/register", async (ctx, next) => {
             if (!doc) {
                 let newUser = new User({
                     userTel: tel,
-                    userPassword: password
+                    userPassword: password,
+                    avatarPath: `-images-avatar-default.jpg`,
+                    pay: "000000"
                 })
                 newUser.save()
                 return next().then(() => {
@@ -217,7 +221,7 @@ router.post("/info", upload.single("avatar"), async (ctx, next) => {
     }
 })
 
-//修改密码
+//修改密码 需要用户id
 router.post("/password", async (ctx, next) => {
     let { id, oldPW, newPW } = ctx.request.body
     if (!oldPW || !newPW || !id) {
@@ -247,6 +251,30 @@ router.post("/password", async (ctx, next) => {
             })
         }
     })
+})
+
+//修改支付密码 需要用户id
+router.post("/pay", async (ctx, next) => {
+    let { id, payPassword, userPassword } = ctx.request.body,
+        userPW = await User.findOne({ _id: id }).then(doc => {
+            return doc.userPassword
+        })
+    if (userPassword !== userPW) {
+        return next().then(() => {
+            ctx.response.body = {
+                code: "-1",
+                msg: "验证帐号密码错误"
+            }
+        })
+    }
+    await User.updateOne({_id: id}, {pay: payPassword}).then(doc => {
+        ctx.response.body = {
+            code: "200",
+            msg: "修改支付密码成功"
+        }
+    })
+
+    console.log(userPW)
 })
 
 module.exports = router
