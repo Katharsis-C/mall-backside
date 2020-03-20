@@ -57,7 +57,7 @@ router.post("/", async (ctx, next) => {
                 item: itemList,
                 orderTime: current,
                 total: total,
-                status: "交易未完成"
+                status: "0"
             })
         await orderModel.save()
         await User.updateOne(
@@ -122,7 +122,7 @@ router.delete("/", async (ctx, next) => {
 //到货处理 需要订单id
 router.post("/complete", async (ctx, next) => {
     let { id } = ctx.request.body
-    await Order.updateOne({ _id: id }, { status: "交易已完成" }).then(doc => {
+    await Order.updateOne({ _id: id }, { status: "1" }).then(doc => {
         if (doc.nModified !== 0) {
             return next().then(() => {
                 ctx.response.body = {
