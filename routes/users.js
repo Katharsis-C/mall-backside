@@ -196,27 +196,34 @@ router.get("/info", async (ctx, next) => {
 //修改用户信息
 router.post("/info", upload.single("avatar"), async (ctx, next) => {
     ctx.body = "info"
-    let { id, nickname, name, gender, birth, tel, email } = ctx.request.body
+    let {
+        id,
+        nickname,
+        userName: name,
+        userSex: gender,
+        birth,
+        userTel: tel,
+        userEmail: email
+    } = ctx.request.body
     let pic = ctx.request.file
     // console.log(ctx.request.body)
-    let tmpPath = pic.path.replace(new RegExp("public"), "")
-    let savePath = tmpPath.replace(/\\/g, "-")
     let data = {
         nickname: nickname,
         userName: name,
         userSex: gender,
         birth: birth,
         userTel: tel,
-        userEmail: email,
-        avatarPath: savePath
+        userEmail: email
     }
+    if (pic) {
+        let tmpPath = pic.path.replace(new RegExp("public"), "")
+        let savePath = tmpPath.replace(/\\/g, "-")
+        Object.assign(data, { avatarPath: savePath })
+    }
+
     try {
-        await User.updateOne(
-            {
-                _id: id
-            },
-            data
-        ).then(doc => {
+        await User.updateOne({ _id: id }, data).then(doc => {
+            console.log(doc)
             ctx.response.body = {
                 code: "200",
                 msg: "修改成功"
