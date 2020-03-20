@@ -23,16 +23,29 @@ router.get("/", async (ctx, next) => {
         avatarPath: 0,
         coupon: 0
     }
+    let { id, status: flag } = ctx.query,
+        res = null
     try {
-        let { id } = ctx.query
-        await User.findOne({ _id: id }, projection)
+        let userOrder = await User.findOne({ _id: id })
             .populate("order")
-            .then(doc => {
-                ctx.response.body = {
-                    code: "200",
-                    data: doc.order
-                }
-            })
+            .then(doc => doc.order)
+        switch (flag) {
+            case "0":
+                res = userOrder.filter(value => value.status === "交易未完成")
+                break
+            case "1":
+                res = userOrder.filter(value => value.status === "交易已完成")
+                break
+            default:
+                res = userOrder
+        }
+        return next().then(() => {
+            ctx.response.body = {
+                code: "200",
+                msg: "请求用户订单成功",
+                data: res
+            }
+        })
     } catch (error) {
         return next().then(() => {
             ctx.response.body = {
@@ -57,7 +70,7 @@ router.post("/", async (ctx, next) => {
                 item: itemList,
                 orderTime: current,
                 total: total,
-                status: "0"
+                status: "交易未完成"
             })
         await orderModel.save()
         await User.updateOne(
