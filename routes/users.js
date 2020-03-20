@@ -85,10 +85,12 @@ router.post("/register", async (ctx, next) => {
         await User.findOne({ userEmail: email }).then(doc => {
             if (!doc) {
                 let newUser = new User({
+                    nickname: "default",
                     userEmail: email,
                     userPassword: password,
                     avatarPath: `-images-avatar-default.jpg`,
-                    pay: "000000"
+                    pay: "000000",
+                    qa: { question: "默认问题答案是000000", answer: "000000" }
                 })
                 newUser.save().then(doc)
                 return next().then(() => {
@@ -112,10 +114,12 @@ router.post("/register", async (ctx, next) => {
         await User.findOne({ userTel: tel }).then(doc => {
             if (!doc) {
                 let newUser = new User({
+                    nickname: "default",
                     userTel: tel,
                     userPassword: password,
                     avatarPath: `-images-avatar-default.jpg`,
-                    pay: "000000"
+                    pay: "000000",
+                    qa: { question: "默认问题答案是000000", answer: "000000" }
                 })
                 newUser.save()
                 return next().then(() => {
@@ -207,7 +211,12 @@ router.post("/info", upload.single("avatar"), async (ctx, next) => {
         avatarPath: savePath
     }
     try {
-        await User.updateOne({ _id: id }, data).then(doc => {
+        await User.updateOne(
+            {
+                _id: id
+            },
+            data
+        ).then(doc => {
             ctx.response.body = {
                 code: "200",
                 msg: "修改成功"
@@ -235,7 +244,14 @@ router.post("/password", async (ctx, next) => {
     await User.findOne({ _id: id }).then(async doc => {
         console.log(oldPW, doc.userPassword)
         if (oldPW === doc.userPassword) {
-            await User.updateOne({ _id: id }, { userPassword: newPW })
+            await User.updateOne(
+                {
+                    _id: id
+                },
+                {
+                    userPassword: newPW
+                }
+            )
             return next().then(() => {
                 ctx.response.body = {
                     code: "200",
@@ -267,7 +283,7 @@ router.post("/pay", async (ctx, next) => {
             }
         })
     }
-    await User.updateOne({_id: id}, {pay: payPassword}).then(doc => {
+    await User.updateOne({ _id: id }, { pay: payPassword }).then(doc => {
         ctx.response.body = {
             code: "200",
             msg: "修改支付密码成功"
@@ -275,6 +291,41 @@ router.post("/pay", async (ctx, next) => {
     })
 
     console.log(userPW)
+})
+
+//设置安全问题
+router.post("/qa", async (ctx, next) => {
+    let { id, question: que, answer: ans, password } = ctx.request.body
+    try {
+        userPW = await User.findOne({ _id: id }).then(doc => doc.userPassword)
+        if (password !== userPW) {
+            return next().then(() => {
+                ctx.response.body = {
+                    msg: "密码错误",
+                    code: "-1"
+                }
+            })
+        } else {
+            await User.updateOne(
+                { _id: id },
+                { question: que, answer: ans }
+            ).then(doc => {
+                if (doc.nModified !== 0) {
+                    return next().then(() => {
+                        ctx.response.body = {
+                            msg: "设置安全问题成功",
+                            code: "200"
+                        }
+                    })
+                }
+            })
+        }
+    } catch (error) {
+        ctx.response.body = {
+            msg: "安全问题格式错误",
+            code: "-1"
+        }
+    }
 })
 
 module.exports = router

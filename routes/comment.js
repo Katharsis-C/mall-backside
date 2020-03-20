@@ -4,6 +4,7 @@ const User = require("../models/user")
 
 router.prefix("/comment")
 
+//获取评论
 router.get("/", async (ctx, next) => {
     let { id } = ctx.query,
         resList = []
@@ -29,8 +30,12 @@ router.get("/", async (ctx, next) => {
     })
 })
 
+//添加评论
 router.post("/", async (ctx, next) => {
-    let { userID, itemID, comment } = ctx.request.body
+    let { userID, itemID, comment } = ctx.request.body,
+        current = `${date.getFullYear()}-${date.getMonth() +
+            1}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`
+
     if (!userID || !itemID || !comment) {
         return next().then(() => {
             ctx.response.body = {
@@ -50,15 +55,22 @@ router.post("/", async (ctx, next) => {
         itemName = doc.itemName
     })
     // console.log(userName, itemName, comment)
+
+    //创建用户评论对象
     let commentInUser = {
         itemImg: `http:127.0.0.1:3000${itemImg.replace(/-/g, `\/`)}`,
+        type: String,
         itemName: itemName,
+        time: current,
         content: comment
     }
+    //创建商品评论对象
     let commentInItem = {
         userName: userName,
+        time: current,
         content: comment
     }
+
     // console.log(commentInItem, commentInUser)
     await User.updateOne(
         { _id: userID },

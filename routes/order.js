@@ -57,7 +57,7 @@ router.post("/", async (ctx, next) => {
                 item: itemList,
                 orderTime: current,
                 total: total,
-                status: "卖家已发货"
+                status: "交易未完成"
             })
         await orderModel.save()
         await User.updateOne(
@@ -85,7 +85,7 @@ router.post("/", async (ctx, next) => {
 router.delete("/", async (ctx, next) => {
     try {
         let { id } = ctx.request.body
-        if(!id) {
+        if (!id) {
             return next().then(() => {
                 ctx.response.body = {
                     code: "-1",
@@ -94,19 +94,21 @@ router.delete("/", async (ctx, next) => {
             })
         }
         await Order.deleteOne({ _id: id })
-        await User.updateOne({ order: id }, { $pull: { order: id } }).then(doc => {
-            if (doc.nModified !== 0) {
-                ctx.response.body = {
-                    code: "200",
-                    msg: "删除订单成功"
-                }
-            } else {
-                ctx.response.body = {
-                    code: "404",
-                    msg: "没有要删除的订单"
+        await User.updateOne({ order: id }, { $pull: { order: id } }).then(
+            doc => {
+                if (doc.nModified !== 0) {
+                    ctx.response.body = {
+                        code: "200",
+                        msg: "删除订单成功"
+                    }
+                } else {
+                    ctx.response.body = {
+                        code: "404",
+                        msg: "没有要删除的订单"
+                    }
                 }
             }
-        })
+        )
     } catch (error) {
         return next().then(() => {
             ctx.response.body = {
@@ -115,6 +117,28 @@ router.delete("/", async (ctx, next) => {
             }
         })
     }
+})
+
+//到货处理 需要订单id
+router.post("/complete", async (ctx, next) => {
+    let { id } = ctx.request.body
+    await Order.updateOne({ _id: id }, { status: "交易已完成" }).then(doc => {
+        if (doc.nModified !== 0) {
+            return next().then(() => {
+                ctx.response.body = {
+                    code: "200",
+                    msg: "已确认到货"
+                }
+            })
+        } else {
+            return next().then(() => {
+                ctx.response.body = {
+                    code: "-1",
+                    msg: "确认收货出错"
+                }
+            })
+        }
+    })
 })
 
 module.exports = router

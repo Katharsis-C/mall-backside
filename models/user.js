@@ -12,21 +12,19 @@ const userSchema = mongoose.Schema(
         birth: String,
         comment: [
             {
+                time: String,
                 itemImg: String,
                 itemName: String,
                 content: String
             }
         ],
-        addressList: [
-            {
-                type: mongoose.Types.ObjectId, ref :"Address"
-            }
-        ],
+        addressList: [{ type: mongoose.Types.ObjectId, ref: "Address" }],
         avatarPath: String,
-        order: [{type: mongoose.Types.ObjectId, ref: "Order"}],
+        order: [{ type: mongoose.Types.ObjectId, ref: "Order" }],
         coupon: Array,
         pay: String,
-        collects: [{type: mongoose.Types.ObjectId, ref: "Goods"}]
+        collects: [{ type: mongoose.Types.ObjectId, ref: "Goods" }],
+        qa: { question: String, answer: String }
     },
     { versionKey: false }
 )
