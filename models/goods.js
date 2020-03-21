@@ -16,7 +16,7 @@ const goodsSchema = mongoose.Schema(
         comment: [{
             time: String,
             avatar: String,
-            userName: String,
+            nickname: String,
             content: String
         }]
     },

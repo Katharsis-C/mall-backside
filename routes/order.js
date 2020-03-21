@@ -135,8 +135,8 @@ router.delete("/", async (ctx, next) => {
 //到货处理 需要订单id
 router.post("/complete", async (ctx, next) => {
     let { id } = ctx.request.body
-    await Order.updateOne({ _id: id }, { status: "1" }).then(doc => {
-        if (doc.nModified !== 0) {
+    await Order.updateOne({ _id: id }, { status: "交易已完成" }).then(doc => {
+        if (doc.nModified >= 0) {
             return next().then(() => {
                 ctx.response.body = {
                     code: "200",

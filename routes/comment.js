@@ -2,6 +2,7 @@ const router = require("koa-router")()
 const Goods = require("../models/goods")
 const User = require("../models/user")
 
+const findAndReturn = require("../utils/findAndReturn")
 const convertImgPath = require("../utils/convertImgPath")
 
 router.prefix("/comment")
@@ -47,17 +48,21 @@ router.post("/", async (ctx, next) => {
             }
         })
     }
-    let [userName, userAvatar, itemName, itemImg] = [null, null, null, null]
-    await User.findOne({ _id: userID }).then(doc => {
-        // console.log(doc)
-        userName = doc.nickname
-        userAvatar = doc.avatarPath
-    })
-    await Goods.findOne({ _id: itemID }).then(doc => {
-        // console.log(doc)
-        itemImg = doc.homeImg
-        itemName = doc.itemName
-    })
+
+    // let [userName, userAvatar, itemName, itemImg] = [null, null, null, null]
+    // await User.findOne({ _id: userID }).then(doc => {
+    //     // console.log(doc)
+    //     userName = doc.nickname
+    //     userAvatar = doc.avatarPath
+    // })
+    // await Goods.findOne({ _id: itemID }).then(doc => {
+    //     // console.log(doc)
+    //     itemImg = doc.homeImg
+    //     itemName = doc.itemName
+    // })
+
+    let {nickname, avatarPath: userAvatar} = await findAndReturn(User, userID),
+        {itemName, homeImg: itemImg} = await findAndReturn(Goods, itemID)
     // console.log(userName, itemName, comment)
 
     //创建用户评论对象
@@ -72,7 +77,7 @@ router.post("/", async (ctx, next) => {
     //创建商品评论对象
     let commentInItem = {
         avatar: convertImgPath(userAvatar),
-        userName: userName,
+        nickname: nickname,
         time: current,
         content: comment
     }
