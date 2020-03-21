@@ -14,6 +14,8 @@ const goodsSchema = mongoose.Schema(
         junior: { type: String, required: true },
         styleID: { type: Array, required: true },
         comment: [{
+            time: String,
+            avatar: String,
             userName: String,
             content: String
         }]

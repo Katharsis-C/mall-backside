@@ -61,7 +61,7 @@ router.get("/", async function(ctx, next) {
 //添加分类
 router.post("/", async (ctx, next) => {
     let data = new Category(ctx.request.body)
-    console.log(typeof data.property)
+    // console.log(typeof data.property)
     if (
         typeof data.category == "undefined" ||
         typeof data.property == "undefined"
@@ -90,7 +90,7 @@ router.put("/", async (ctx, next) => {
     let data = ctx.request.body.data
     await Category.updateOne({ _id: id }, data)
         .then(doc => {
-            console.log(doc)
+            // console.log(doc)
             if (doc.nModified === 0) {
                 ctx.response.body = {
                     code: "404",
@@ -148,7 +148,6 @@ router.delete("/", async (ctx, next) => {
 })
 
 //获取属性类别 需要 property._id
-
 router.post("/getspec", async (ctx, next) => {
     let reqProperty = ctx.request.body.property
     await Category.findOne({ _id: reqProperty })
@@ -205,10 +204,10 @@ router.post("/spec", async (ctx, next) => {
 router.put("/spec", async (ctx, next) => {
     let id = ctx.request.body.specID
     let data = ctx.request.body.data
-    console.log(data)
+    // console.log(data)
     await Specification.updateOne({ _id: id }, data)
         .then(doc => {
-            console.log(doc)
+            // console.log(doc)
             if (doc.nModified === 0) {
                 ctx.response.body = {
                     code: "404",
@@ -238,7 +237,7 @@ router.delete("/spec", async (ctx, next) => {
     await Specification.deleteOne({ _id: id })
         .populate("specs")
         .then(doc => {
-            console.log(doc)
+            // console.log(doc)
             if (doc.deletedCount === 0) {
                 ctx.response.body = {
                     code: "404",
@@ -325,7 +324,7 @@ router.delete("/senior", async (ctx, next) => {
 })
 
 router.put("/senior", async (ctx, next) => {
-    console.log("hello")
+    // console.log("hello")
     let { old, newName } = ctx.request.body
     await Category.updateMany({ category: old }, { category: newName }).then(
         doc => {

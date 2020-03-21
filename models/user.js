@@ -15,7 +15,8 @@ const userSchema = mongoose.Schema(
                 time: String,
                 itemImg: String,
                 itemName: String,
-                content: String
+                content: String,
+                spec: String
             }
         ],
         addressList: [{ type: mongoose.Types.ObjectId, ref: "Address" }],

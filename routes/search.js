@@ -86,7 +86,7 @@ router.post("/admingoods", async (ctx, next) => {
 //前台搜索栏
 router.get("/home", async (ctx, next) => {
     let { keyword } = ctx.query
-    console.log(keyword)
+    // console.log(keyword)
     if (!keyword) {
         return next().then(() => {
             ctx.response.body = {

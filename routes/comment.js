@@ -2,6 +2,8 @@ const router = require("koa-router")()
 const Goods = require("../models/goods")
 const User = require("../models/user")
 
+const convertImgPath = require("../utils/convertImgPath")
+
 router.prefix("/comment")
 
 //获取评论
@@ -32,7 +34,8 @@ router.get("/", async (ctx, next) => {
 
 //添加评论
 router.post("/", async (ctx, next) => {
-    let { userID, itemID, comment } = ctx.request.body,
+    let { userID, itemID, comment, type } = ctx.request.body,
+        date = new Date(),
         current = `${date.getFullYear()}-${date.getMonth() +
             1}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`
 
@@ -44,10 +47,11 @@ router.post("/", async (ctx, next) => {
             }
         })
     }
-    let [userName, itemName, itemImg] = [null, null, null]
+    let [userName, userAvatar, itemName, itemImg] = [null, null, null, null]
     await User.findOne({ _id: userID }).then(doc => {
         // console.log(doc)
         userName = doc.nickname
+        userAvatar = doc.avatarPath
     })
     await Goods.findOne({ _id: itemID }).then(doc => {
         // console.log(doc)
@@ -58,14 +62,16 @@ router.post("/", async (ctx, next) => {
 
     //创建用户评论对象
     let commentInUser = {
-        itemImg: `http:127.0.0.1:3000${itemImg.replace(/-/g, `\/`)}`,
-        type: String,
+        itemImg: convertImgPath(itemImg),
+        spec: type,
         itemName: itemName,
         time: current,
         content: comment
     }
+
     //创建商品评论对象
     let commentInItem = {
+        avatar: convertImgPath(userAvatar),
         userName: userName,
         time: current,
         content: comment

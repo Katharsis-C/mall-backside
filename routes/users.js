@@ -2,9 +2,12 @@ const router = require("koa-router")()
 const mongoose = require("mongoose")
 const User = require("../models/user")
 const jwt = require("jsonwebtoken")
-const useMulter = require("../public/javascripts/koamultr")
 
+//tools
+const useMulter = require("../utils/koamultr")
+const convertImgPath = require("../utils/convertImgPath")
 const upload = useMulter("avatar")
+const findAndReturn = require("../utils/findAndReturn")
 
 /**
  * JWT secret
@@ -26,6 +29,7 @@ const checkAccount = function(account) {
     return 0
 }
 
+//链接数据库
 mongoose.connect(DB_URL, {
     useNewUrlParser: true,
     useUnifiedTopology: true
@@ -63,10 +67,7 @@ router.post("/login", async (ctx, next) => {
                     msg: "登录成功",
                     userID: doc._id,
                     nickname: doc.nickname,
-                    userAvatar: `http:127.0.0.1:3000${doc.avatarPath.replace(
-                        /-/g,
-                        `\/`
-                    )}`,
+                    userAvatar: convertImgPath(doc.avatarPath),
                     token: token
                 }
             } else {
@@ -90,7 +91,10 @@ router.post("/register", async (ctx, next) => {
                     userPassword: password,
                     avatarPath: `-images-avatar-default.jpg`,
                     pay: "000000",
-                    qa: { question: "默认问题答案是000000", answer: "000000" }
+                    qa: {
+                        question: "这是默认问题答案是000000",
+                        answer: "000000"
+                    }
                 })
                 newUser.save().then(doc)
                 return next().then(() => {
@@ -119,7 +123,10 @@ router.post("/register", async (ctx, next) => {
                     userPassword: password,
                     avatarPath: `-images-avatar-default.jpg`,
                     pay: "000000",
-                    qa: { question: "默认问题答案是000000", answer: "000000" }
+                    qa: {
+                        question: "这是默认问题答案是000000",
+                        answer: "000000"
+                    }
                 })
                 newUser.save()
                 return next().then(() => {
@@ -165,6 +172,7 @@ router.post("/register", async (ctx, next) => {
     }
 })
 
+//获取用户信息
 router.get("/info", async (ctx, next) => {
     let { id } = ctx.query
     if (!id) {
@@ -184,7 +192,7 @@ router.get("/info", async (ctx, next) => {
             collects: 0
         }
         await User.findOne({ _id: id }, projection).then(doc => {
-            doc.avatarPath = doc.avatarPath.replace(/-/g, `\/`)
+            doc.avatarPath = convertImgPath(doc.avatarPath)
             ctx.response.body = {
                 code: "200",
                 data: doc
@@ -223,7 +231,7 @@ router.post("/info", upload.single("avatar"), async (ctx, next) => {
 
     try {
         await User.updateOne({ _id: id }, data).then(doc => {
-            console.log(doc)
+            // console.log(doc)
             ctx.response.body = {
                 code: "200",
                 msg: "修改成功"
@@ -237,7 +245,7 @@ router.post("/info", upload.single("avatar"), async (ctx, next) => {
     }
 })
 
-//修改密码 需要用户id
+//修改密码 需要用户id 新密码 旧密码
 router.post("/password", async (ctx, next) => {
     let { id, oldPW, newPW } = ctx.request.body
     if (!oldPW || !newPW || !id) {
@@ -249,7 +257,7 @@ router.post("/password", async (ctx, next) => {
         })
     }
     await User.findOne({ _id: id }).then(async doc => {
-        console.log(oldPW, doc.userPassword)
+        // console.log(oldPW, doc.userPassword)
         if (oldPW === doc.userPassword) {
             await User.updateOne(
                 {
@@ -276,8 +284,8 @@ router.post("/password", async (ctx, next) => {
     })
 })
 
-//修改支付密码 需要用户id
-router.post("/pay", async (ctx, next) => {
+//修改支付密码 需要用户id和新的支付密码
+router.put("/pay", async (ctx, next) => {
     let { id, payPassword, userPassword } = ctx.request.body,
         userPW = await User.findOne({ _id: id }).then(doc => {
             return doc.userPassword
@@ -297,14 +305,69 @@ router.post("/pay", async (ctx, next) => {
         }
     })
 
-    console.log(userPW)
+    // console.log(userPW)
 })
 
-//设置安全问题
-router.post("/qa", async (ctx, next) => {
+//验证支付密码 需要用户id和支付密码
+router.post("/pay", async (ctx, next) => {
+    try {
+        let { payPassword, id } = ctx.request.body,
+            { pay: payCode } = await findAndReturn(User, id, {})
+        // console.log(payPassword, id, payCode)
+        if (payPassword === payCode) {
+            return next().then(() => {
+                ctx.response.body = {
+                    code: "200",
+                    msg: "支付成功"
+                }
+            })
+        } else {
+            return next().then(() => {
+                ctx.response.body = {
+                    code: "0",
+                    msg: "支付密码错误"
+                }
+            })
+        }
+    } catch (error) {
+        return next().then(() => {
+            ctx.response.body = {
+                code: "-1",
+                msg: "支付出错"
+            }
+        })
+    }
+})
+
+//获取安全问题的问题 需要用户id
+router.get("/qa", async (ctx, next) => {
+    let { id } = ctx.query
+    // console.log(id)
+    try {
+        let { qa } = await findAndReturn(User, id)
+        // console.log(qa.question)
+        return next().then(() => {
+            ctx.response.body = {
+                code: "200",
+                data: qa.question
+            }
+        })
+    } catch (error) {
+        return next().then(() => {
+            ctx.response.body = {
+                code: "-1",
+                msg: "请求出错"
+            }
+        })
+    }
+})
+
+//设置安全问题 需要用户id 问题 答案 密码
+router.put("/qa", async (ctx, next) => {
     let { id, question: que, answer: ans, password } = ctx.request.body
     try {
         userPW = await User.findOne({ _id: id }).then(doc => doc.userPassword)
+        // console.log(userPW)
         if (password !== userPW) {
             return next().then(() => {
                 ctx.response.body = {
@@ -313,18 +376,17 @@ router.post("/qa", async (ctx, next) => {
                 }
             })
         } else {
+            // console.log('123')
             await User.updateOne(
                 { _id: id },
-                { question: que, answer: ans }
+                { qa: { question: que, answer: ans } }
             ).then(doc => {
-                if (doc.nModified !== 0) {
-                    return next().then(() => {
-                        ctx.response.body = {
-                            msg: "设置安全问题成功",
-                            code: "200"
-                        }
-                    })
-                }
+                return next().then(() => {
+                    ctx.response.body = {
+                        msg: "设置安全问题成功",
+                        code: "200"
+                    }
+                })
             })
         }
     } catch (error) {
@@ -332,6 +394,30 @@ router.post("/qa", async (ctx, next) => {
             msg: "安全问题格式错误",
             code: "-1"
         }
+    }
+})
+
+//验证安全问题 需要用户id 问题 答案
+router.post("/qa", async (ctx, next) => {
+    let { id, question: que, answer: ans } = ctx.request.body
+    try {
+        let { qa } = await findAndReturn(User, id)
+        if (que !== qa.question || ans !== qa.answer) {
+            return (ctx.response.body = {
+                code: "0",
+                msg: "回答错误"
+            })
+        } else {
+            return (ctx.response.body = {
+                code: "200",
+                msg: "回答正确"
+            })
+        }
+    } catch (error) {
+        return (ctx.response.body = {
+            code: "-1",
+            msg: "验证安全问题出错"
+        })
     }
 })
 

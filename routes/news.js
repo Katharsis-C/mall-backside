@@ -1,9 +1,10 @@
 const router = require("koa-router")()
 const News = require("../models/news")
-const fs = require('fs')
-const userMulter = require("../public/javascripts/koamultr")
+const fs = require("fs")
+const userMulter = require("../utils/koamultr")
 
-const upload = userMulter('news')
+const upload = userMulter("news")
+const convertImgPath = require("../utils/convertImgPath")
 
 router.prefix("/news")
 
@@ -20,24 +21,23 @@ const current = `${date.getFullYear()}-${date.getMonth() +
 router.get("/getnews", async (ctx, next) => {
     let { page } = ctx.query,
         total = 0
-    console.log(News.estimatedDocumentCount((err, count) => {
-        if(err) {
-        } else {
-            total = count
-        }
-    }))
+    // console.log(
+    //     News.estimatedDocumentCount((err, count) => {
+    //         if (err) {
+    //         } else {
+    //             total = count
+    //         }
+    //     })
+    // )
     await News.find({})
         .skip((page - 1) * 10)
-        .sort({_id: -1})
+        .sort({ _id: -1 })
         .limit(10)
         .then(doc => {
             if (doc) {
                 let resList = doc
-                for(let item of resList) {
-                    item.picture = `http:127.0.0.1:3000${item.picture.replace(
-                        /-/g,
-                        `\/`
-                    )}`
+                for (let item of resList) {
+                    convertImgPath(item.picture)
                 }
                 ctx.response.body = {
                     code: "200",
@@ -50,7 +50,7 @@ router.get("/getnews", async (ctx, next) => {
 })
 
 //后台添加新闻
-router.post("/" ,async (ctx, next) => {
+router.post("/", async (ctx, next) => {
     let [reqTitle, reqContent] = [
         ctx.request.body.title,
         ctx.request.body.content
@@ -59,9 +59,8 @@ router.post("/" ,async (ctx, next) => {
         title: reqTitle,
         content: reqContent,
         time: current,
-        picture: 'no'
+        picture: "no"
     })
-
 
     await news.save().then(doc => {
         ctx.response.body = {
@@ -72,10 +71,12 @@ router.post("/" ,async (ctx, next) => {
 })
 
 //后台修改新闻
-router.put("/", upload.single("picture") ,async (ctx, next) => {
-    let {_id, title, content} = ctx.request.body
+router.put("/", upload.single("picture"), async (ctx, next) => {
+    let { _id, title, content } = ctx.request.body
     let pic = ctx.request.file
-    let savePath = pic.path.replace(new RegExp("public"), "").replace(/\\/g, "-")
+    let savePath = pic.path
+        .replace(new RegExp("public"), "")
+        .replace(/\\/g, "-")
     let news = {
         time: current,
         _id: _id,
@@ -85,7 +86,12 @@ router.put("/", upload.single("picture") ,async (ctx, next) => {
     }
     await News.updateOne(
         { _id: news._id },
-        { time: news.time, title: news.title, content: news.content, picture: news.picture }
+        {
+            time: news.time,
+            title: news.title,
+            content: news.content,
+            picture: news.picture
+        }
     ).then(doc => {
         if (doc.nModified !== 0) {
             ctx.response.body = {

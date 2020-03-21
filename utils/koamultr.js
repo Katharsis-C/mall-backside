@@ -1,6 +1,5 @@
 const multer = require("@koa/multer")
 
-
 module.exports = function(dir) {
     const storage = multer.diskStorage({
         destination: function (req,file,cb) {
