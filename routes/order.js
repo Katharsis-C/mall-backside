@@ -9,26 +9,12 @@ router.prefix("/order")
 
 //获取用户订单 需用户id
 router.get("/", async (ctx, next) => {
-    const projection = {
-        userId: 0,
-        nickname: 0,
-        userName: 0,
-        userEmail: 0,
-        userPassword: 0,
-        userSex: 0,
-        userTel: 0,
-        birth: 0,
-        comment: 0,
-        addressList: 0,
-        avatarPath: 0,
-        coupon: 0
-    }
     let { id, status: flag } = ctx.query,
         res = null
     try {
         let userOrder = await User.findOne({ _id: id })
             .populate("order")
-            .then(doc => doc.order)
+            .then(doc => doc.order.filter(item => item.visible === true))
         switch (flag) {
             case "0":
                 res = userOrder.filter(value => value.status === "交易未完成")
@@ -70,7 +56,8 @@ router.post("/", async (ctx, next) => {
                 item: itemList,
                 orderTime: current,
                 total: total,
-                status: "交易未完成"
+                status: "交易未完成",
+                visible: true
             })
         await orderModel.save()
         await User.updateOne(
@@ -98,30 +85,12 @@ router.post("/", async (ctx, next) => {
 router.delete("/", async (ctx, next) => {
     try {
         let { id } = ctx.request.body
-        if (!id) {
-            return next().then(() => {
-                ctx.response.body = {
-                    code: "-1",
-                    msg: "删除出错"
-                }
-            })
-        }
-        await Order.deleteOne({ _id: id })
-        await User.updateOne({ order: id }, { $pull: { order: id } }).then(
-            doc => {
-                if (doc.nModified !== 0) {
-                    ctx.response.body = {
-                        code: "200",
-                        msg: "删除订单成功"
-                    }
-                } else {
-                    ctx.response.body = {
-                        code: "404",
-                        msg: "没有要删除的订单"
-                    }
-                }
+        await Order.updateOne({ _id: id }, {visible: false}).then(doc => {
+            ctx.response.body = {
+                code: "200",
+                msg: "删除成功"
             }
-        )
+        })
     } catch (error) {
         return next().then(() => {
             ctx.response.body = {
