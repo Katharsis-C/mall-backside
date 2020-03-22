@@ -37,13 +37,14 @@ router.get("/getnews", async (ctx, next) => {
             if (doc) {
                 let resList = doc
                 for (let item of resList) {
-                    convertImgPath(item.picture)
+                    item.picture = convertImgPath(item.picture)
                 }
+                // console.log(resList)
                 ctx.response.body = {
                     code: "200",
                     msg: "获取新闻成功",
                     total: total,
-                    doc
+                    resList
                 }
             }
         })
@@ -59,9 +60,8 @@ router.post("/", async (ctx, next) => {
         title: reqTitle,
         content: reqContent,
         time: current,
-        picture: "no"
+        picture: "-images-news-default.jpg"
     })
-
     await news.save().then(doc => {
         ctx.response.body = {
             code: "200",
