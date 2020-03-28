@@ -28,7 +28,8 @@ router.get("/", async (ctx, next) => {
     await next().then(() => {
         ctx.response.body = {
             code: "200",
-            data: resList
+            data: resList,
+            total: resList.length
         }
     })
 })
@@ -67,7 +68,8 @@ router.post("/", async (ctx, next) => {
 
     //创建用户评论对象
     let commentInUser = {
-        itemImg: convertImgPath(itemImg),
+        _id: itemID,
+        itemImg: itemImg,
         spec: type,
         itemName: itemName,
         time: current,
@@ -76,6 +78,7 @@ router.post("/", async (ctx, next) => {
 
     //创建商品评论对象
     let commentInItem = {
+        _id: userID,
         avatar: convertImgPath(userAvatar),
         nickname: nickname,
         time: current,

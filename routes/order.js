@@ -11,20 +11,22 @@ router.prefix("/order")
 router.get("/", async (ctx, next) => {
     let { id, status: flag } = ctx.query,
         res = null
+        resList = []
     try {
         let userOrder = await User.findOne({ _id: id })
             .populate("order")
             .then(doc => doc.order.filter(item => item.visible === true))
         switch (flag) {
-            case "0":
+            case "1":
                 res = userOrder.filter(value => value.status === "交易未完成")
                 break
-            case "1":
+            case "2":
                 res = userOrder.filter(value => value.status === "交易已完成")
                 break
             default:
                 res = userOrder
         }
+        resList = res.filter(item => item.visible === 'true')
         return next().then(() => {
             ctx.response.body = {
                 code: "200",
@@ -46,7 +48,7 @@ router.get("/", async (ctx, next) => {
 router.post("/", async (ctx, next) => {
     try {
         let date = new Date(),
-            { goods: itemList, total, userID } = ctx.request.body,
+            { goods: itemList, total, userID, message, express } = ctx.request.body,
             current = `${date.getFullYear()}-${date.getMonth() +
                 1}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`,
             objID = mongoose.Types.ObjectId(),
@@ -57,7 +59,9 @@ router.post("/", async (ctx, next) => {
                 orderTime: current,
                 total: total,
                 status: "交易未完成",
-                visible: true
+                visible: true,
+                message: message,
+                express: express
             })
         await orderModel.save()
         await User.updateOne(

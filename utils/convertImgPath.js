@@ -1,5 +1,5 @@
 module.exports = function(path) {
-    return `http:127.0.0.1:3000${path.replace(
+    return `http://127.0.0.1:3000${path.replace(
         /-/g,
         `\/`
     )}`

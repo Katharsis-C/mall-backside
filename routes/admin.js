@@ -1,12 +1,12 @@
-const router = require("koa-router")()
-const jwt = require("jsonwebtoken")
+const router = require('koa-router')()
+const jwt = require('jsonwebtoken')
 
-const Admin = require("../models/admin")
-const User = require("../models/user")
+const Admin = require('../models/admin')
+const User = require('../models/user')
 
-router.prefix("/admin")
+router.prefix('/admin')
 
-const secret = "UMP45"
+const secret = 'UMP45'
 // const createUser = obj => {
 //     let userObj = {
 //         id: obj._id,
@@ -25,27 +25,27 @@ const secret = "UMP45"
 //     return userObj
 // }
 
-router.post("/login", async (ctx, next) => {
+router.post('/login', async (ctx, next) => {
     let { account: acc, password: pw } = ctx.request.body
     await Admin.findOne({ account: acc }).then(doc => {
         if (!doc) {
             ctx.response.body = {
-                code: "0",
-                msg: "没有该帐号"
+                code: '0',
+                msg: '没有该帐号'
             }
         } else {
             if (pw === doc.password) {
                 let _token = jwt.sign({ account: doc.account }, secret, {
-                    expiresIn: "1d"
+                    expiresIn: '1d'
                 })
                 ctx.response.body = {
-                    code: "1",
+                    code: '1',
                     msg: `${acc}登录成功`,
                     token: _token
                 }
             } else {
                 ctx.response.body = {
-                    code: "-1",
+                    code: '-1',
                     msg: `密码错误`
                 }
             }
@@ -53,25 +53,44 @@ router.post("/login", async (ctx, next) => {
     })
 })
 
-router.get("/getuser", async (ctx, next) => {
+router.get('/getuser', async (ctx, next) => {
     const projection = {
         userEmail: 0,
         userPassword: 0,
-        avatarPath: 0,   
-        "addressList._id": 0,
-        "addressList.isDefault": 0,
-        "addressList.phont": 0,
-        "addressList.receiver": 0,
-        "comment._id": 0
-
+        avatarPath: 0,
+        'addressList._id': 0,
+        'addressList.isDefault': 0,
+        'addressList.phont': 0,
+        'addressList.receiver': 0,
+        'comment._id': 0,
+        pay: 0,
+        qa: 0
     }
     await User.find({}, projection)
-        .populate({path: "order", select:"item.name item.type orderId orderTime status"})
+        .populate([
+            {
+                path: 'order',
+                select: 'item.name item.type orderId orderTime status'
+            },
+            {
+                path: 'addressList',
+                select: 'erceiver phone province city district location'
+            },
+            {
+                path: 'order',
+                select: 'item orderId orderTime'
+            },
+            {
+                path: 'collects',
+                select: 'itemName'
+            }
+
+        ])
         .then(doc => {
             if (doc) {
                 ctx.response.body = {
-                    code: "200",
-                    msg: "请求用户信息成功",
+                    code: '200',
+                    msg: '请求用户信息成功',
                     data: doc
                 }
             } else {
@@ -85,13 +104,13 @@ router.get("/getuser", async (ctx, next) => {
     // }
 })
 
-router.post("/search", async (ctx, next) => {
+router.post('/search', async (ctx, next) => {
     let { keyword } = ctx.request.body
     if (!keyword) {
         return next().then(() => {
             ctx.response.body = {
-                code: "-1",
-                msg: "搜索关键字错误"
+                code: '-1',
+                msg: '搜索关键字错误'
             }
         })
     }
@@ -100,7 +119,7 @@ router.post("/search", async (ctx, next) => {
     }).then(doc => {
         if (doc) {
             ctx.response.body = {
-                code: "200",
+                code: '200',
                 msg: `搜索${keyword}的信息`,
                 data: doc
             }

@@ -43,8 +43,8 @@ router.get("/getnews", async (ctx, next) => {
                 ctx.response.body = {
                     code: "200",
                     msg: "获取新闻成功",
-                    total: total,
-                    resList
+                    total: resList.length,
+                    data: resList
                 }
             }
         })
