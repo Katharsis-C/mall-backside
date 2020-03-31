@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken')
 
 const Admin = require('../models/admin')
 const User = require('../models/user')
+const Order = require('../models/order')
 
 router.prefix('/admin')
 
@@ -64,27 +65,19 @@ router.get('/getuser', async (ctx, next) => {
         'addressList.receiver': 0,
         'comment._id': 0,
         pay: 0,
-        qa: 0
+        qa: 0,
+        order: 0
     }
     await User.find({}, projection)
         .populate([
-            {
-                path: 'order',
-                select: 'item.name item.type orderId orderTime status'
-            },
             {
                 path: 'addressList',
                 select: 'erceiver phone province city district location'
             },
             {
-                path: 'order',
-                select: 'item orderId orderTime'
-            },
-            {
                 path: 'collects',
                 select: 'itemName'
             }
-
         ])
         .then(doc => {
             if (doc) {
@@ -102,6 +95,38 @@ router.get('/getuser', async (ctx, next) => {
     //     msg: "请求用户信息成功",
     //     data: resList
     // }
+})
+
+router.get('/getorder', async (ctx, next) => {
+    let { page, size } = ctx.query
+    try {
+        const projection = {
+            visible: 0,
+            'item.imgscr': 0
+        }
+        await Order.find({}, projection)
+            .skip((page - 1) * size)
+            .limit(Number(size))
+            .populate({
+                path: 'address',
+                select: 'receiver phone province city district location'
+            })
+            .then(doc => {
+                ctx.response.body = {
+                    code: '200',
+                    msg: '请求订单列表成功',
+                    data: doc
+                }
+            })
+    } catch (error) {
+        console.log(error)
+        return next().then(() => {
+            ctx.response.body = {
+                code: '-1',
+                msg: '请求订单列表失败'
+            }
+        })
+    }
 })
 
 router.post('/search', async (ctx, next) => {
