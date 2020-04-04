@@ -2,6 +2,7 @@ const router = require('koa-router')()
 const Goods = require('../models/goods')
 const User = require('../models/user')
 const Comment = require('../models/comment')
+const mongoose = require('mongoose')
 
 const findAndReturn = require('../utils/findAndReturn')
 const convertImgPath = require('../utils/convertImgPath')
@@ -34,84 +35,147 @@ router.get('/', async (ctx, next) => {
     // }
     // })
 
-    //1-用户  2-商品
+    //1-获罪用户评论  2-获取商品评论
     let { commentType, id } = ctx.query,
         resList = [],
         res = null
     switch (commentType) {
-        case 1:
-            res = await Comment({ userId: id }).then((doc) => doc)
+        case '1':
+            res = await Comment.find({ userId: id })
+                .populate({ path: 'itemId', select: 'itemName homeImg' }) 
+                .then(doc => {
+                    for (const item of doc) {
+                        let { itemId, type, time, content } = item
+                        let { itemName, homeImg } = itemId
+                        let tmpObj = {
+                            itemName,
+                            type,
+                            time,
+                            homeImg: convertImgPath(homeImg),
+                            content
+                        }
+                        resList.push(tmpObj)
+                    }
+                    return resList
+                })
             break
-        case 2:
-            res = await Comment({ itemId: id }).then((doc) => doc)
+        case '2':
+            res = await Comment.find({ itemId: id })
+                .populate({ path: 'userId', select: 'nickname avatarPath' })
+                .then(doc => {
+                    for (const item of doc) {
+                        let { userId, type, time, content } = item
+                        let { nickname, avatarPath } = userId
+                        let tmpObj = {
+                            avatarPath: convertImgPath(avatarPath),
+                            nickname,
+                            type,
+                            time,
+                            content
+                        }
+                        resList.push(tmpObj)
+                    }
+                    return resList
+                })
+            break
         default:
             ctx.response.body = {
                 code: '-1',
                 msg: '请求参数错误'
             }
     }
-    console.log(res)
-
+    return next().then(() => {
+        ctx.response.body = {
+            code: '200',
+            msg: '请求评论成功',
+            data: res
+        }
+    })
 })
 
 //添加评论
 router.post('/', async (ctx, next) => {
-    let { userID, itemID, comment, type } = ctx.request.body,
+    let { userID: userId, itemID: itemId, content, type } = ctx.request.body,
         date = new Date(),
-        current = `${date.getFullYear()}-${
-            date.getMonth() + 1
-        }-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`
+        current = `${date.getFullYear()}-${date.getMonth() +
+            1}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`
 
-    if (!userID || !itemID || !comment) {
+    if (!userId || !itemId || !content || !type) {
         return next().then(() => {
             ctx.response.body = {
                 code: '-1',
-                msg: '参数出错',
+                msg: '参数出错'
             }
         })
     }
 
-    let { nickname, avatarPath: userAvatar } = await findAndReturn(
-            User,
-            userID
-        ),
-        { itemName, homeImg: itemImg } = await findAndReturn(Goods, itemID)
-    // console.log(userName, itemName, comment)
+    const commentObj = new Comment({
+        _id: mongoose.Types.ObjectId(),
+        userId,
+        itemId,
+        content,
+        type,
+        time: current
+    })
 
-    //创建用户评论对象
-    let commentInUser = {
-        _id: itemID,
-        itemImg: itemImg,
-        spec: type,
-        itemName: itemName,
-        time: current,
-        content: comment,
-    }
-
-    //创建商品评论对象
-    let commentInItem = {
-        _id: userID,
-        avatar: convertImgPath(userAvatar),
-        nickname: nickname,
-        time: current,
-        content: comment,
-    }
-
-    // console.log(commentInItem, commentInUser)
+    await Goods.updateOne({ _id: itemId }, { $inc: { rateCount: 1 } })
     await User.updateOne(
-        { _id: userID },
-        { $addToSet: { comment: commentInUser } }
+        { _id: userId },
+        { $addToSet: { comment: commentObj._id } }
     )
     await Goods.updateOne(
-        { _id: itemID },
-        { $addToSet: { comment: commentInItem } }
+        { _id: itemId },
+        { $addToSet: { comment: commentObj._id } }
     )
-    await next().then(() => {
+
+    await commentObj.save().then(() => {
         ctx.response.body = {
             code: '200',
-            msg: '评论成功',
+            msg: '评论成功'
         }
     })
+
+    // let { nickname, avatarPath: userAvatar } = await findAndReturn(
+    //         User,
+    //         userID
+    //     ),
+    //     { itemName, homeImg: itemImg } = await findAndReturn(Goods, itemID)
+    // // console.log(userName, itemName, comment)
+
+    // //创建用户评论对象
+    // let commentInUser = {
+    //     _id: itemID,
+    //     itemImg: itemImg,
+    //     spec: type,
+    //     itemName: itemName,
+    //     time: current,
+    //     content: comment,
+    // }
+
+    // //创建商品评论对象
+    // let commentInItem = {
+    //     _id: userID,
+    //     avatar: convertImgPath(userAvatar),
+    //     nickname: nickname,
+    //     time: current,
+    //     content: comment,
+    // }
+
+    // // console.log(commentInItem, commentInUser)
+    // await User.updateOne(
+    //     { _id: userID },
+    //     { $addToSet: { comment: commentInUser } }
+    // )
+    // await Goods.updateOne(
+    //     { _id: itemID },
+    //     { $addToSet: { comment: commentInItem } }
+    // )
+    // await next().then(() => {
+    // ctx.response.body = {
+    //     code: '200',
+    //     msg: '评论成功',
+    // }
+    // })
 })
 
 module.exports = router

@@ -14,12 +14,7 @@ const goodsSchema = mongoose.Schema(
         itemDetail: { type: String, required: true },
         junior: { type: String, required: true },
         styleID: { type: Array, required: true },
-        comment: [{
-            time: String,
-            avatar: String,
-            nickname: String,
-            content: String
-        }]
+        comment: [{ type: mongoose.Types.ObjectId, ref: 'Comment' }],
     },
     { versionKey: false }
 )
