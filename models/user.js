@@ -1,4 +1,4 @@
-const mongoose = require("mongoose")
+const mongoose = require('mongoose')
 
 const userSchema = mongoose.Schema(
     {
@@ -10,24 +10,16 @@ const userSchema = mongoose.Schema(
         userSex: String,
         userTel: String,
         birth: String,
-        comment: [
-            {
-                time: String,
-                itemImg: String,
-                itemName: String,
-                content: String,
-                spec: String
-            }
-        ],
-        addressList: [{ type: mongoose.Types.ObjectId, ref: "Address" }],
+        comment: [{ type: mongoose.Types.ObjectId, ref: 'Comment' }],
+        addressList: [{ type: mongoose.Types.ObjectId, ref: 'Address' }],
         avatarPath: String,
-        order: [{ type: mongoose.Types.ObjectId, ref: "Order" }],
+        order: [{ type: mongoose.Types.ObjectId, ref: 'Order' }],
         coupon: Array,
         pay: String,
-        collects: [{ type: mongoose.Types.ObjectId, ref: "Goods" }],
-        qa: { question: String, answer: String }
+        collects: [{ type: mongoose.Types.ObjectId, ref: 'Goods' }],
+        qa: { question: String, answer: String },
     },
     { versionKey: false }
 )
 
-module.exports = mongoose.model("User", userSchema)
+module.exports = mongoose.model('User', userSchema)
