@@ -90,6 +90,7 @@ router.post("/", async (ctx, next) => {
     }
     let item = new Goods(req)
     item.homeImg = 'http://127.0.0.1:3000/images/goods/homeimg/default.jpg'
+    item.goodsImg = 'http://127.0.0.1:3000/images/goods/goodsImg/default.jpg'
     await item
         .save()
         .then(() => {
@@ -134,7 +135,8 @@ router.put("/", async (ctx, next) => {
 
 //后台删除商品
 router.delete("/", async (ctx, next) => {
-    await Goods.deleteOne({ _id: ctx.request.body }).then(doc => {
+    let {id} = ctx.request.body
+    await Goods.deleteOne({ _id: id }).then(doc => {
         // console.log(doc)
         if (doc.deletedCount === 0) {
             ctx.response.body = {

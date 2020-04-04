@@ -10,6 +10,7 @@ router.prefix("/address")
 //获取用户地址 需用户id
 router.get("/", async (ctx, next) => {
     let { id } = ctx.query
+    console.log(id)
     try {
         await User.findOne({ _id: id })
             .populate({
@@ -17,7 +18,7 @@ router.get("/", async (ctx, next) => {
                 select: `_id receiver phone province city district location isDefault`
             })
             .then(doc => {
-                
+                console.log(doc)
                 ctx.response.body = {
                     code: "200",
                     msg: "地址列表请求成功",
