@@ -36,13 +36,15 @@ router.get('/', async (ctx, next) => {
     // })
 
     //1-获罪用户评论  2-获取商品评论
-    let { commentType, id } = ctx.query,
+    let { commentType, id, page, size } = ctx.query,
         resList = [],
         res = null
     switch (commentType) {
         case '1':
             res = await Comment.find({ userId: id })
-                .populate({ path: 'itemId', select: 'itemName homeImg' }) 
+                .populate({ path: 'itemId', select: 'itemName homeImg' })
+                .skip(size * (page - 1))
+                .limit(size)
                 .then(doc => {
                     for (const item of doc) {
                         let { itemId, type, time, content } = item
@@ -62,6 +64,8 @@ router.get('/', async (ctx, next) => {
         case '2':
             res = await Comment.find({ itemId: id })
                 .populate({ path: 'userId', select: 'nickname avatarPath' })
+                .skip(size * (page - 1))
+                .limit(size)
                 .then(doc => {
                     for (const item of doc) {
                         let { userId, type, time, content } = item
