@@ -4,6 +4,7 @@ const User = require('../models/user')
 const Goods = require('../models/goods')
 const Category = require('../models/category')
 const Spec = require('../models/specification')
+const Order = require('../models/order')
 
 router.prefix('/search')
 
@@ -83,10 +84,30 @@ router.prefix('/search')
 //     })
 // })
 
+//1-用户账号
+//2-商品名称
+//3-订单id
 router.get('/admin', async (ctx, next) => {
-    let { keyword, flag } = ctx.query
+    let { keyword, flag, page, size } = ctx.query,
+        res = null
     switch (flag) {
         case '1':
+            res = await User.find({ _id: keyword }).then((doc) => doc)
+            break
+        case '2':
+            res = await Goods.find({ itemName: new RegExp(`^${keyword}`) })
+                .skip(size * (page - 1))
+                .limit(size)
+                .then(doc => doc)
+            break
+        case '3':
+            res = await Order.find({ orderId: new RegExp(`${keyword}`) })
+            break
+        default:
+            ctx.response.body = {
+                code: '-1',
+                msg: '请求参数错误',
+            }
     }
 })
 
