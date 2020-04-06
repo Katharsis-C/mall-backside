@@ -14,26 +14,24 @@ router.get('/', (ctx, next) => {
 
 const date = new Date()
 
-const current = `${date.getFullYear()}-${date.getMonth() +
-    1}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`
+const current = `${date.getFullYear()}-${
+    date.getMonth() + 1
+}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`
 
 //获取新闻
 router.get('/getnews', async (ctx, next) => {
     let { page, size } = ctx.query,
-        total = 0
-    // console.log(
-    //     News.estimatedDocumentCount((err, count) => {
-    //         if (err) {
-    //         } else {
-    //             total = count
-    //         }
-    //     })
-    // )
+        total = await News.estimatedDocumentCount((err, count) => {
+            if (err) {
+            } else {
+                return count
+            }
+        })
     await News.find({})
         .skip((page - 1) * size)
         .sort({ _id: -1 })
-        .limit(size)
-        .then(doc => {
+        .limit(Number(size))
+        .then((doc) => {
             if (doc) {
                 let resList = doc
                 for (let item of resList) {
@@ -43,8 +41,8 @@ router.get('/getnews', async (ctx, next) => {
                 ctx.response.body = {
                     code: '200',
                     msg: '获取新闻成功',
-                    total: resList.length,
-                    data: resList
+                    total: total,
+                    data: resList,
                 }
             }
         })
@@ -54,18 +52,18 @@ router.get('/getnews', async (ctx, next) => {
 router.post('/', async (ctx, next) => {
     let [reqTitle, reqContent] = [
         ctx.request.body.title,
-        ctx.request.body.content
+        ctx.request.body.content,
     ]
     let news = new News({
         title: reqTitle,
         content: reqContent,
         time: current,
-        picture: '-images-news-default.jpg'
+        picture: '-images-news-default.jpg',
     })
-    await news.save().then(doc => {
+    await news.save().then((doc) => {
         ctx.response.body = {
             code: '200',
-            msg: '发布新闻成功'
+            msg: '发布新闻成功',
         }
     })
 })
@@ -82,7 +80,7 @@ router.put('/', upload.single('picture'), async (ctx, next) => {
         _id: _id,
         title: title,
         content: content,
-        picture: savePath
+        picture: savePath,
     }
     await News.updateOne(
         { _id: news._id },
@@ -90,18 +88,18 @@ router.put('/', upload.single('picture'), async (ctx, next) => {
             time: news.time,
             title: news.title,
             content: news.content,
-            picture: news.picture
+            picture: news.picture,
         }
-    ).then(doc => {
+    ).then((doc) => {
         if (doc.nModified !== 0) {
             ctx.response.body = {
                 code: '200',
-                msg: '修改新闻成功'
+                msg: '修改新闻成功',
             }
         } else {
             ctx.response.body = {
                 code: '404',
-                msg: '没有要修改的地方'
+                msg: '没有要修改的地方',
             }
         }
     })
@@ -110,16 +108,16 @@ router.put('/', upload.single('picture'), async (ctx, next) => {
 //后台删除新闻
 router.delete('/', async (ctx, next) => {
     let id = ctx.request.body._id
-    await News.deleteOne({ _id: id }).then(doc => {
+    await News.deleteOne({ _id: id }).then((doc) => {
         if (doc.deletedCount !== 0) {
             ctx.response.body = {
                 code: '200',
-                msg: '删除新闻成功'
+                msg: '删除新闻成功',
             }
         } else {
             ctx.response.body = {
                 code: '404',
-                msg: '没有要删除的新闻'
+                msg: '没有要删除的新闻',
             }
         }
     })

@@ -38,14 +38,15 @@ router.get('/', async (ctx, next) => {
     //1-获罪用户评论  2-获取商品评论
     let { commentType, id, page, size } = ctx.query,
         resList = [],
-        res = null
+        res = null,
+        total = 0
     switch (commentType) {
         case '1':
             res = await Comment.find({ userId: id })
                 .populate({ path: 'itemId', select: 'itemName homeImg' })
                 .skip(size * (page - 1))
-                .limit(size)
-                .then(doc => {
+                .limit(Number(size))
+                .then((doc) => {
                     for (const item of doc) {
                         let { itemId, type, time, content } = item
                         let { itemName, homeImg } = itemId
@@ -54,19 +55,23 @@ router.get('/', async (ctx, next) => {
                             type,
                             time,
                             homeImg: convertImgPath(homeImg),
-                            content
+                            content,
                         }
                         resList.push(tmpObj)
                     }
                     return resList
                 })
+            total = await Comment.countDocuments(
+                { userId: id },
+                (count) => count
+            )
             break
         case '2':
             res = await Comment.find({ itemId: id })
                 .populate({ path: 'userId', select: 'nickname avatarPath' })
                 .skip(size * (page - 1))
-                .limit(size)
-                .then(doc => {
+                .limit(Number(size))
+                .then((doc) => {
                     for (const item of doc) {
                         let { userId, type, time, content } = item
                         let { nickname, avatarPath } = userId
@@ -75,24 +80,29 @@ router.get('/', async (ctx, next) => {
                             nickname,
                             type,
                             time,
-                            content
+                            content,
                         }
                         resList.push(tmpObj)
                     }
                     return resList
                 })
+            total = await Comment.countDocuments(
+                { itemId: id },
+                (count) => count
+            )
             break
         default:
             ctx.response.body = {
                 code: '-1',
-                msg: '请求参数错误'
+                msg: '请求参数错误',
             }
     }
     return next().then(() => {
         ctx.response.body = {
             code: '200',
             msg: '请求评论成功',
-            data: res
+            data: res,
+            total: total,
         }
     })
 })
@@ -101,14 +111,15 @@ router.get('/', async (ctx, next) => {
 router.post('/', async (ctx, next) => {
     let { userID: userId, itemID: itemId, content, type } = ctx.request.body,
         date = new Date(),
-        current = `${date.getFullYear()}-${date.getMonth() +
-            1}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`
+        current = `${date.getFullYear()}-${
+            date.getMonth() + 1
+        }-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`
 
     if (!userId || !itemId || !content || !type) {
         return next().then(() => {
             ctx.response.body = {
                 code: '-1',
-                msg: '参数出错'
+                msg: '参数出错',
             }
         })
     }
@@ -119,7 +130,7 @@ router.post('/', async (ctx, next) => {
         itemId,
         content,
         type,
-        time: current
+        time: current,
     })
 
     await Goods.updateOne({ _id: itemId }, { $inc: { rateCount: 1 } })
@@ -135,7 +146,7 @@ router.post('/', async (ctx, next) => {
     await commentObj.save().then(() => {
         ctx.response.body = {
             code: '200',
-            msg: '评论成功'
+            msg: '评论成功',
         }
     })
 

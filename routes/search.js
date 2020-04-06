@@ -87,18 +87,85 @@ router.prefix('/search')
 //1-用户账号
 //2-商品名称
 //3-订单id
+const createItem = function (obj) {
+    let itemObj = {
+        id: obj._id,
+        itemName: obj.itemName,
+        homeImg: obj.homeImg,
+        goodsImg: obj.goodsImg,
+        price: obj.price,
+        stock: obj.stock,
+        salesCount: obj.salesCount,
+        collectCount: obj.collectCount,
+        rateCount: obj.rateCount,
+        itemDetail: obj.itemDetail,
+        junior: obj.junior,
+        styleID: obj.styleID,
+        type: '',
+        styleList: null,
+    }
+    return itemObj
+}
+
 router.get('/admin', async (ctx, next) => {
     let { keyword, flag, page, size } = ctx.query,
         res = null
     switch (flag) {
         case '1':
-            res = await User.find({ _id: keyword }).then((doc) => doc)
+            res = await User.find({ _id: keyword })
+                .populate([
+                    {
+                        path: 'addressList',
+                    },
+                    {
+                        path: 'collects',
+                    },
+                    {
+                        path: 'comment'
+                    }
+                ])
+                .then((doc) => doc)
             break
         case '2':
-            res = await Goods.find({ itemName: new RegExp(`^${keyword}`) })
-                .skip(size * (page - 1))
-                .limit(size)
-                .then(doc => doc)
+            res = []
+            await Goods.find({itemName: new RegExp(`${keyword}`)})
+                .skip((page - 1) * size)
+                .limit(Number(size))
+                .then((doc) => {
+                    if (doc) {
+                        // console.log(doc)
+                        for (const item of doc) {
+                            // console.log(doc)
+                            res.push(createItem(item))
+                        }
+                        // console.log(doc)
+                    }
+                })
+
+            for (let element of res) {
+                await Category.findOne(
+                    { _id: element.junior },
+                    { property: 0, category: 0 }
+                )
+                    .populate('specs')
+
+                    .then((doc) => {
+                        // console.log(doc)
+                        element.styleList = doc.specs
+                    })
+
+                for (let style of element.styleID) {
+                    await Spec.findOne(
+                        { 'specList._id': style },
+                        { _id: 0, specType: 1, 'specList.$': 1 }
+                    ).then((doc) => {
+                        let _type = doc.specType
+                        let sty = doc.specList[0].style
+                        // console.log(`${_type} ${sty}`)
+                        element.type += `${_type} ${sty} `
+                    })
+                }
+            }
             break
         case '3':
             res = await Order.find({ orderId: new RegExp(`${keyword}`) })
@@ -109,6 +176,13 @@ router.get('/admin', async (ctx, next) => {
                 msg: '请求参数错误',
             }
     }
+    return next().then(() => {
+        ctx.response.body = {
+            code: '200',
+            msg: '搜索成功',
+            data: res,
+        }
+    })
 })
 
 //前台搜索栏
@@ -150,8 +224,7 @@ router.get('/goodslist', async (ctx, next) => {
         comment: 0,
     }
     if (id) {
-        let total = 0
-        await Goods.countDocuments({ junior: id }, (err, count) => {
+        let total = Goods.countDocuments({ junior: id }, (err, count) => {
             total = count
         })
         await Goods.find({ junior: id }, projection)
