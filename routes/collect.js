@@ -29,9 +29,10 @@ router.get('/', async (ctx, next) => {
         await User.findOne({ _id: id }, projection)
             .populate({
                 path: 'collects',
-                select: '_id itemName price price salesCount homeImg'
+                select: '_id itemName price price salesCount homeImg oldPrice newPrice'
             })
             .then(doc => {
+                console.log(doc)
                 ctx.response.body = {
                     code: '200',
                     data: doc.collects
