@@ -91,8 +91,8 @@ router.post('/', async (ctx, next) => {
         return next()
     }
     let item = new Goods(req)
-    item.homeImg = 'http://127.0.0.1:3000/images/goods/homeimg/default.jpg'
-    item.goodsImg = 'http://127.0.0.1:3000/images/goods/goodsImg/default.jpg'
+    item.homeImg = '-images-goods-homeimg-default.jpg'
+    item.goodsImg = '-images-goods-homeimg-default.jpg'
     await item
         .save()
         .then(() => {
