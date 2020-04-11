@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken')
 const Admin = require('../models/admin')
 const User = require('../models/user')
 const Order = require('../models/order')
+const Coupon = require('../models/coupon')
 
 router.prefix('/admin')
 
@@ -26,34 +27,36 @@ const secret = 'UMP45'
 //     return userObj
 // }
 
+//后台登录
 router.post('/login', async (ctx, next) => {
     let { account: acc, password: pw } = ctx.request.body
-    await Admin.findOne({ account: acc }).then(doc => {
+    await Admin.findOne({ account: acc }).then((doc) => {
         if (!doc) {
             ctx.response.body = {
                 code: '0',
-                msg: '没有该帐号'
+                msg: '没有该帐号',
             }
         } else {
             if (pw === doc.password) {
                 let _token = jwt.sign({ account: doc.account }, secret, {
-                    expiresIn: '1d'
+                    expiresIn: '1d',
                 })
                 ctx.response.body = {
                     code: '1',
                     msg: `${acc}登录成功`,
-                    token: _token
+                    token: _token,
                 }
             } else {
                 ctx.response.body = {
                     code: '-1',
-                    msg: `密码错误`
+                    msg: `密码错误`,
                 }
             }
         }
     })
 })
 
+//后台获取用户
 router.get('/getuser', async (ctx, next) => {
     const projection = {
         userEmail: 0,
@@ -66,25 +69,32 @@ router.get('/getuser', async (ctx, next) => {
         'comment._id': 0,
         pay: 0,
         qa: 0,
-        order: 0
+        order: 0,
     }
+
+    let total = await User.estimatedDocumentCount((error, count) => count),
+        { page, size } = ctx.query
     await User.find({}, projection)
+        .skip((page - 1) * size)
+        .limit(Number(size))
+
         .populate([
             {
                 path: 'addressList',
-                select: 'erceiver phone province city district location'
+                select: 'erceiver phone province city district location',
             },
             {
                 path: 'collects',
-                select: 'itemName'
-            }
+                select: 'itemName',
+            },
         ])
-        .then(doc => {
+        .then((doc) => {
             if (doc) {
                 ctx.response.body = {
                     code: '200',
                     msg: '请求用户信息成功',
-                    data: doc
+                    data: doc,
+                    total: total,
                 }
             } else {
                 return next()
@@ -97,25 +107,29 @@ router.get('/getuser', async (ctx, next) => {
     // }
 })
 
+//后台获取订单
 router.get('/getorder', async (ctx, next) => {
     let { page, size } = ctx.query
     try {
         const projection = {
             visible: 0,
-            'item.imgscr': 0
+            'item.imgscr': 0,
         }
+        let total = await Order.estimatedDocumentCount((error, count) => count)
         await Order.find({}, projection)
             .skip((page - 1) * size)
             .limit(Number(size))
             .populate({
                 path: 'address',
-                select: 'receiver phone province city district location'
+                select: 'receiver phone province city district location',
             })
-            .then(doc => {
+            .then((doc) => {
+                doc.total = total
                 ctx.response.body = {
                     code: '200',
                     msg: '请求订单列表成功',
-                    data: doc
+                    data: doc,
+                    total: total,
                 }
             })
     } catch (error) {
@@ -123,33 +137,43 @@ router.get('/getorder', async (ctx, next) => {
         return next().then(() => {
             ctx.response.body = {
                 code: '-1',
-                msg: '请求订单列表失败'
+                msg: '请求订单列表失败',
             }
         })
     }
 })
 
-router.post('/search', async (ctx, next) => {
-    let { keyword } = ctx.request.body
-    if (!keyword) {
-        return next().then(() => {
-            ctx.response.body = {
-                code: '-1',
-                msg: '搜索关键字错误'
-            }
-        })
-    }
-    await User.find({
-        $or: [{ nickname: keyword }, { userTel: keyword }]
-    }).then(doc => {
-        if (doc) {
-            ctx.response.body = {
-                code: '200',
-                msg: `搜索${keyword}的信息`,
-                data: doc
-            }
-        }
-    })
-})
 
+// router.post('/search', async (ctx, next) => {
+//     let { keyword } = ctx.request.body
+//     if (!keyword) {
+//         return next().then(() => {
+//             ctx.response.body = {
+//                 code: '-1',
+//                 msg: '搜索关键字错误',
+//             }
+//         })
+//     }
+//     await User.find({
+//         $or: [{ nickname: keyword }, { userTel: keyword }],
+//     }).then((doc) => {
+//         if (doc) {
+//             ctx.response.body = {
+//                 code: '200',
+//                 msg: `搜索${keyword}的信息`,
+//                 data: doc,
+//             }
+//         }
+//     })
+// })
+
+
+router.post('/addcoupon', async (ctx, next) => {
+    let { date, discount } = ctx.request.body,
+        couponModel = new Coupon({
+            date: date,
+            discount: discount,
+        })
+    couponModel.save()
+})
 module.exports = router

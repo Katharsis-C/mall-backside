@@ -109,7 +109,8 @@ const createItem = function (obj) {
 
 router.get('/admin', async (ctx, next) => {
     let { keyword, flag, page, size } = ctx.query,
-        res = null
+        res = null,
+        total = 0
     switch (flag) {
         case '1':
             res = await User.find({ _id: keyword })
@@ -121,14 +122,14 @@ router.get('/admin', async (ctx, next) => {
                         path: 'collects',
                     },
                     {
-                        path: 'comment'
-                    }
+                        path: 'comment',
+                    },
                 ])
                 .then((doc) => doc)
             break
         case '2':
             res = []
-            await Goods.find({itemName: new RegExp(`${keyword}`)})
+            await Goods.find({ itemName: new RegExp(`${keyword}`) })
                 .skip((page - 1) * size)
                 .limit(Number(size))
                 .then((doc) => {
@@ -169,6 +170,12 @@ router.get('/admin', async (ctx, next) => {
             break
         case '3':
             res = await Order.find({ orderId: new RegExp(`${keyword}`) })
+                .skip((page - 1) * size)
+                .limit(Number(size))
+                .then((doc) => doc)
+            total = await Order.estimatedDocumentCount(
+                (error, count) => count
+            )
             break
         default:
             ctx.response.body = {
@@ -181,6 +188,7 @@ router.get('/admin', async (ctx, next) => {
             code: '200',
             msg: '搜索成功',
             data: res,
+            total: total
         }
     })
 })

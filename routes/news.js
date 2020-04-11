@@ -20,7 +20,7 @@ const current = `${date.getFullYear()}-${
 
 //获取新闻
 router.get('/getnews', async (ctx, next) => {
-    let { page, size } = ctx.query,
+    let { page, pageSize } = ctx.query,
         total = await News.estimatedDocumentCount((err, count) => {
             if (err) {
             } else {
@@ -28,9 +28,9 @@ router.get('/getnews', async (ctx, next) => {
             }
         })
     await News.find({})
-        .skip((page - 1) * size)
+        .skip((page - 1) * pageSize)
         .sort({ _id: -1 })
-        .limit(Number(size))
+        .limit(Number(pageSize))
         .then((doc) => {
             if (doc) {
                 let resList = doc

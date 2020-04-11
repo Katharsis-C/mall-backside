@@ -1,11 +1,11 @@
-const router = require("koa-router")()
-const Goods = require("../models/goods")
-const Category = require("../models/category")
-const Spec = require("../models/specification")
+const router = require('koa-router')()
+const Goods = require('../models/goods')
+const Category = require('../models/category')
+const Spec = require('../models/specification')
 
-router.prefix("/goods")
+router.prefix('/goods')
 
-const createItem = function(obj) {
+const createItem = function (obj) {
     let itemObj = {
         id: obj._id,
         itemName: obj.itemName,
@@ -19,20 +19,21 @@ const createItem = function(obj) {
         itemDetail: obj.itemDetail,
         junior: obj.junior,
         styleID: obj.styleID,
-        type: "",
-        styleList: null
+        type: '',
+        styleList: null,
     }
     return itemObj
 }
 
 //后台获取商品列表
-router.get("/", async (ctx, next) => {
+router.get('/', async (ctx, next) => {
     let resList = []
-    let {page, size} = ctx.query
+    let { page, size } = ctx.query,
+        total = await Goods.estimatedDocumentCount((error, count) => count)
     await Goods.find({})
         .skip((page - 1) * size)
         .limit(Number(size))
-        .then(doc => {
+        .then((doc) => {
             if (doc) {
                 // console.log(doc)
                 for (const item of doc) {
@@ -48,18 +49,18 @@ router.get("/", async (ctx, next) => {
             { _id: element.junior },
             { property: 0, category: 0 }
         )
-            .populate("specs")
+            .populate('specs')
 
-            .then(doc => {
+            .then((doc) => {
                 // console.log(doc)
                 element.styleList = doc.specs
             })
 
         for (let style of element.styleID) {
             await Spec.findOne(
-                { "specList._id": style },
-                { _id: 0, specType: 1, "specList.$": 1 }
-            ).then(doc => {
+                { 'specList._id': style },
+                { _id: 0, specType: 1, 'specList.$': 1 }
+            ).then((doc) => {
                 let _type = doc.specType
                 let sty = doc.specList[0].style
                 // console.log(`${_type} ${sty}`)
@@ -71,20 +72,21 @@ router.get("/", async (ctx, next) => {
     await next().then(() => {
         // console.log(resList)
         ctx.response.body = {
-            code: "200",
-            msg: "获取商品列表成功",
-            data: resList
+            code: '200',
+            msg: '获取商品列表成功',
+            data: resList,
+            total: total,
         }
     })
 })
 
 //后台添加商品
-router.post("/", async (ctx, next) => {
+router.post('/', async (ctx, next) => {
     let req = ctx.request.body
-    if (JSON.stringify(req) === "{}") {
+    if (JSON.stringify(req) === '{}') {
         ctx.response.body = {
-            code: "404",
-            msg: "提交数据错误"
+            code: '404',
+            msg: '提交数据错误',
         }
         return next()
     }
@@ -95,38 +97,38 @@ router.post("/", async (ctx, next) => {
         .save()
         .then(() => {
             ctx.response.body = {
-                code: "200",
-                msg: "添加商品成功"
+                code: '200',
+                msg: '添加商品成功',
             }
         })
-        .catch(err => {
+        .catch((err) => {
             console.log(err)
             ctx.response.body = {
-                code: "404",
-                msg: "添加商品失败"
+                code: '404',
+                msg: '添加商品失败',
             }
         })
 })
 
 //后台修改商品
-router.put("/", async (ctx, next) => {
+router.put('/', async (ctx, next) => {
     let req = ctx.request.body
     let id = ctx.request.body.id
     delete req.id
     // console.log(id)
     // console.log(req)
-    await Goods.updateOne({ _id: id }, req).then(doc => {
+    await Goods.updateOne({ _id: id }, req).then((doc) => {
         console.log(doc)
         if (doc.nModified === 0) {
             ctx.response.body = {
-                code: "404",
-                msg: "没有修改的商品"
+                code: '404',
+                msg: '没有修改的商品',
                 // doc
             }
         } else {
             ctx.response.body = {
-                code: "200",
-                msg: "修改商品信息成功"
+                code: '200',
+                msg: '修改商品信息成功',
                 // doc
             }
         }
@@ -134,38 +136,38 @@ router.put("/", async (ctx, next) => {
 })
 
 //后台删除商品
-router.delete("/", async (ctx, next) => {
-    let {id} = ctx.request.body
-    await Goods.deleteOne({ _id: id }).then(doc => {
+router.delete('/', async (ctx, next) => {
+    let { id } = ctx.request.body
+    await Goods.deleteOne({ _id: id }).then((doc) => {
         // console.log(doc)
         if (doc.deletedCount === 0) {
             ctx.response.body = {
-                code: "404",
-                msg: "什么也没有删掉"
+                code: '404',
+                msg: '什么也没有删掉',
             }
         } else {
             ctx.response.body = {
-                code: "200",
-                msg: "删除商品成功"
+                code: '200',
+                msg: '删除商品成功',
             }
         }
     })
 })
 
 //前台首页 随机商品
-router.get("/todayrecommend", async (ctx, next) => {
-    let createObj = obj => {
+router.get('/todayrecommend', async (ctx, next) => {
+    let createObj = (obj) => {
         let tmp = {
             id: obj._id,
             img: obj.homeImg,
             name: obj.itemName,
-            price: obj.price
+            price: obj.price,
         }
         return tmp
     }
     try {
         await Goods.aggregate([{ $match: {} }, { $sample: { size: 3 } }]).then(
-            doc => {
+            (doc) => {
                 let resList = []
                 for (const item of doc) {
                     resList.push(createObj(item))
@@ -173,23 +175,23 @@ router.get("/todayrecommend", async (ctx, next) => {
                 // console.log(resList)
                 return next().then(() => {
                     ctx.response.body = {
-                        code: "200",
-                        msg: "获取成功",
-                        data: resList
+                        code: '200',
+                        msg: '获取成功',
+                        data: resList,
                     }
                 })
             }
         )
     } catch {
         ctx.response.body = {
-            code: "-1",
-            msg: "获取错误"
+            code: '-1',
+            msg: '获取错误',
         }
     }
 })
 
 //前台商品页
-router.get("/item", async (ctx, next) => {
+router.get('/item', async (ctx, next) => {
     let item = null
     let styleArr = []
     let styleMap = new Map()
@@ -198,33 +200,36 @@ router.get("/item", async (ctx, next) => {
     if (!id) {
         return next()
     }
-    await Goods.findOne({ _id: id }).then(doc => {
+    await Goods.findOne({ _id: id }).then((doc) => {
         item = doc
     })
     await next().then(async () => {
         // console.log(item)
         for (const style of item.styleID) {
             await Spec.findOne(
-                { "specList._id": style },
-                { specType: 1, _id: 0, "specList.$": 1 }
-            ).then(doc => {
+                { 'specList._id': style },
+                { specType: 1, _id: 0, 'specList.$': 1 }
+            ).then((doc) => {
                 console.log(doc)
-                if(!styleMap.has(doc.specType)) {
+                if (!styleMap.has(doc.specType)) {
                     styleMap.set(doc.specType, doc.specList[0].style)
                 } else {
                     let tmp = styleMap.get(doc.specType)
-                    styleMap.set(doc.specType, `${tmp} ${doc.specList[0].style}`)
+                    styleMap.set(
+                        doc.specType,
+                        `${tmp} ${doc.specList[0].style}`
+                    )
                 }
             })
         }
         // console.log(styleMap)
-        for(const [key,value] of styleMap) {
-            styleArr.push({type: key, style: value.split(" ")})
+        for (const [key, value] of styleMap) {
+            styleArr.push({ type: key, style: value.split(' ') })
         }
         item.styleID = styleArr
         ctx.response.body = {
-            code: "200",
-            data: item
+            code: '200',
+            data: item,
         }
     })
 })
