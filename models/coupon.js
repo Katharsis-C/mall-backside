@@ -1,8 +1,8 @@
 const mongoose = require('mongoose')
 
 const couponSchema = mongoose.Schema({
-    _id: {type: mongoose.Types.ObjectId},
-    discount: String
-})
+    endTime: String,
+    discount: Number,
+}, {versionKey: false})
 
 module.exports = mongoose.model('Coupon', couponSchema)

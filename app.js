@@ -1,25 +1,26 @@
-const Koa = require("koa")
+const Koa = require('koa')
 const app = new Koa()
-const views = require("koa-views")
-const json = require("koa-json")
-const onerror = require("koa-onerror")
-const bodyparser = require("koa-bodyparser")
-const logger = require("koa-logger")
-const cors = require("koa2-cors")
-const koaJwt = require("koa-jwt")
-const jwt = require("jsonwebtoken")
+const views = require('koa-views')
+const json = require('koa-json')
+const onerror = require('koa-onerror')
+const bodyparser = require('koa-bodyparser')
+const logger = require('koa-logger')
+const cors = require('koa2-cors')
+const koaJwt = require('koa-jwt')
+const jwt = require('jsonwebtoken')
 
-const index = require("./routes/index")
-const users = require("./routes/users")
-const news = require("./routes/news")
-const goods = require("./routes/goods")
-const category = require("./routes/category")
-const admin = require("./routes/admin")
-const address = require("./routes/address")
-const search = require("./routes/search")
-const comment = require("./routes/comment")
-const collect = require("./routes/collect")
-const order = require("./routes/order")
+const index = require('./routes/index')
+const users = require('./routes/users')
+const news = require('./routes/news')
+const goods = require('./routes/goods')
+const category = require('./routes/category')
+const admin = require('./routes/admin')
+const address = require('./routes/address')
+const search = require('./routes/search')
+const comment = require('./routes/comment')
+const collect = require('./routes/collect')
+const order = require('./routes/order')
+const coupon = require('./routes/coupon')
 
 // error handler
 onerror(app)
@@ -27,16 +28,16 @@ onerror(app)
 // middlewares
 app.use(
     bodyparser({
-        enableTypes: ["json", "form", "text"]
+        enableTypes: ['json', 'form', 'text'],
     })
 )
 app.use(json())
 app.use(logger())
-app.use(require("koa-static")(__dirname + "/public"))
+app.use(require('koa-static')(__dirname + '/public'))
 
 app.use(
-    views(__dirname + "/views", {
-        extension: "pug"
+    views(__dirname + '/views', {
+        extension: 'pug',
     })
 )
 
@@ -63,7 +64,7 @@ app.use(async (ctx, next) => {
 // verify token
 app.use(async (ctx, next) => {
     if (ctx.header && ctx.header.authorization) {
-        const parts = ctx.header.authorization.split(" ")
+        const parts = ctx.header.authorization.split(' ')
         if (parts.length === 2) {
             //取出token
             const scheme = parts[0]
@@ -73,22 +74,22 @@ app.use(async (ctx, next) => {
                 try {
                     // console.log("verify")
                     //jwt.verify方法验证token是否有效
-                    jwt.verify(token, "UMP45", {
-                        complete: true
+                    jwt.verify(token, 'UMP45', {
+                        complete: true,
                     })
                 } catch (error) {
                     console.log(error)
                     ctx.status = 401
-                    ctx.body = "未登录或者token过期, 请重新登录"
+                    ctx.body = '未登录或者token过期, 请重新登录'
                 }
             }
         }
     }
 
-    return next().catch(err => {
+    return next().catch((err) => {
         if (err.status === 401) {
             ctx.status = 401
-            ctx.body = "未登录或者token过期, 请重新登录\n"
+            ctx.body = '未登录或者token过期, 请重新登录\n'
         } else {
             throw err
         }
@@ -97,11 +98,11 @@ app.use(async (ctx, next) => {
 
 //401
 app.use((ctx, next) => {
-    return next().catch(err => {
+    return next().catch((err) => {
         if (err.status === 401) {
             ctx.status = 401
             ctx.body =
-                "Protected resource, use Authorization header to get access\n"
+                'Protected resource, use Authorization header to get access\n'
         } else {
             throw err
         }
@@ -120,11 +121,11 @@ app.use(search.routes(), index.allowedMethods())
 app.use(comment.routes(), index.allowedMethods())
 app.use(collect.routes(), index.allowedMethods())
 app.use(order.routes(), index.allowedMethods())
-
+app.use(coupon.routes(), index.allowedMethods())
 
 // error-handling
-app.on("error", (err, ctx) => {
-    console.error("server error", err, ctx)
+app.on('error', (err, ctx) => {
+    console.error('server error', err, ctx)
 })
 
 module.exports = app
