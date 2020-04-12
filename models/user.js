@@ -2,7 +2,7 @@ const mongoose = require('mongoose')
 
 const userSchema = mongoose.Schema(
     {
-        userId: Number,
+        account: Number,
         nickname: String,
         userName: String,
         userEmail: String,
@@ -14,7 +14,7 @@ const userSchema = mongoose.Schema(
         addressList: [{ type: mongoose.Types.ObjectId, ref: 'Address' }],
         avatarPath: String,
         order: [{ type: mongoose.Types.ObjectId, ref: 'Order' }],
-        coupon: [{ type: mongoose.Types.ObjectId, ref: 'Coupon' }],
+        couponList: [{ type: mongoose.Types.ObjectId, ref: 'couponRec' }],
         pay: String,
         collects: [{ type: mongoose.Types.ObjectId, ref: 'Goods' }],
         qa: { question: String, answer: String },

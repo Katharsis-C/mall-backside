@@ -59,14 +59,8 @@ router.post('/login', async (ctx, next) => {
 //后台获取用户
 router.get('/getuser', async (ctx, next) => {
     const projection = {
-        userEmail: 0,
         userPassword: 0,
         avatarPath: 0,
-        'addressList._id': 0,
-        'addressList.isDefault': 0,
-        'addressList.phont': 0,
-        'addressList.receiver': 0,
-        'comment._id': 0,
         pay: 0,
         qa: 0,
         order: 0,
@@ -77,16 +71,19 @@ router.get('/getuser', async (ctx, next) => {
     await User.find({}, projection)
         .skip((page - 1) * size)
         .limit(Number(size))
-
         .populate([
             {
                 path: 'addressList',
-                select: 'erceiver phone province city district location',
             },
             {
                 path: 'collects',
-                select: 'itemName',
             },
+            {
+                path: 'comment'
+            },
+            {
+                path: 'order'
+            }
         ])
         .then((doc) => {
             if (doc) {
@@ -143,7 +140,6 @@ router.get('/getorder', async (ctx, next) => {
     }
 })
 
-
 // router.post('/search', async (ctx, next) => {
 //     let { keyword } = ctx.request.body
 //     if (!keyword) {
@@ -168,12 +164,5 @@ router.get('/getorder', async (ctx, next) => {
 // })
 
 
-router.post('/addcoupon', async (ctx, next) => {
-    let { date, discount } = ctx.request.body,
-        couponModel = new Coupon({
-            date: date,
-            discount: discount,
-        })
-    couponModel.save()
-})
+
 module.exports = router

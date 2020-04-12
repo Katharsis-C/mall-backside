@@ -113,7 +113,15 @@ router.get('/admin', async (ctx, next) => {
         total = 0
     switch (flag) {
         case '1':
-            res = await User.find({ _id: keyword })
+            const projection = {
+                userPassword: 0,
+                avatarPath: 0,
+                pay: 0,
+                qa: 0,
+                order: 0,
+            }
+
+            res = await User.find({ _id: keyword }, projection)
                 .populate([
                     {
                         path: 'addressList',
@@ -124,6 +132,9 @@ router.get('/admin', async (ctx, next) => {
                     {
                         path: 'comment',
                     },
+                    {
+                        path: 'order'
+                    }
                 ])
                 .then((doc) => doc)
             break
