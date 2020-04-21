@@ -50,26 +50,41 @@ router.get('/getnews', async (ctx, next) => {
 
 //后台添加新闻
 router.post('/', async (ctx, next) => {
-    let [reqTitle, reqContent] = [
-        ctx.request.body.title,
-        ctx.request.body.content,
-    ]
-    let news = new News({
-        title: reqTitle,
-        content: reqContent,
-        time: current,
-        picture: '-images-news-default.jpg',
-    })
-    await news.save().then((doc) => {
+    let { title: reqTitle, content: reqContent, picture } = ctx.request.body,
+        base64Data = picture.replace(/^data:image\/\w+;base64,/, ''),
+        dataBUffer = new Buffer.from(base64Data, 'base64'),
+        news = null
+    try {
+        fs.writeFile(`./public/images/news/${reqTitle}.jpg`, dataBUffer, function (
+            err
+        ) {
+            if (!!err) {
+                console.log(err)
+            } else {
+                news = new News({
+                    title: reqTitle,
+                    content: reqContent,
+                    time: current,
+                    picture: `-images-news-${reqTitle}.jpg`,
+                })
+                news.save()
+            }
+        })
         ctx.response.body = {
             code: '200',
-            msg: '发布新闻成功',
+            msg: '发布新闻成功'
         }
-    })
+    
+    } catch (error) {
+        ctx.response.body = {
+            code: '-1',
+            msg: '发布新闻失败'
+        }
+    }
 })
 
 //后台修改新闻
-router.put('/', upload.single('picture'), async (ctx, next) => {
+router.put('/', async (ctx, next) => {
     let { _id, title, content } = ctx.request.body
     let pic = ctx.request.file
     let savePath = pic.path

@@ -29,6 +29,7 @@ onerror(app)
 app.use(
     bodyparser({
         enableTypes: ['json', 'form', 'text'],
+        jsonLimit: '5mb'
     })
 )
 app.use(json())
