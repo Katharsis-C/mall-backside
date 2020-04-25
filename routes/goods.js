@@ -67,8 +67,7 @@ router.get('/', async (ctx, next) => {
                 })
             }
         }    
-    } catch (error) {
-        
+    } catch (error) {    
     }
 
     await next().then(() => {
