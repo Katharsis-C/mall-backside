@@ -6,6 +6,9 @@ const Category = require('../models/category')
 const Spec = require('../models/specification')
 const Order = require('../models/order')
 
+const convertImgPath = require('../utils/convertImgPath')
+
+
 router.prefix('/search')
 
 // //后台管理员搜索用户列表
@@ -250,6 +253,11 @@ router.get('/goodslist', async (ctx, next) => {
             .skip((page - 1) * 12)
             .limit(12)
             .then((doc) => {
+                for(const item of doc) {
+                    item.homeImg = convertImgPath(item.homeImg)
+                    // console.log(item)
+                    // item.goodsImg = convertImgPath(goodsImg)
+                }
                 return next().then(() => {
                     ctx.response.body = {
                         code: '200',
