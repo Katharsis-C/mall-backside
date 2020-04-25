@@ -43,30 +43,32 @@ router.get('/', async (ctx, next) => {
                 // console.log(doc)
             }
         })
-
-    for (let element of resList) {
-        await Category.findOne(
-            { _id: element.junior },
-            { property: 0, category: 0 }
-        )
-            .populate('specs')
-
-            .then((doc) => {
-                // console.log(doc)
-                element.styleList = doc.specs
-            })
-
-        for (let style of element.styleID) {
-            await Spec.findOne(
-                { 'specList._id': style },
-                { _id: 0, specType: 1, 'specList.$': 1 }
-            ).then((doc) => {
-                let _type = doc.specType
-                let sty = doc.specList[0].style
-                // console.log(`${_type} ${sty}`)
-                element.type += `${_type} ${sty} `
-            })
-        }
+    try {
+        for (let element of resList) {
+            await Category.findOne(
+                { _id: element.junior },
+                { property: 0, category: 0 }
+            )
+                .populate('specs')
+    
+                .then((doc) => {
+                    // console.log(doc)
+                    element.styleList = doc.specs
+                })
+            for (let style of element.styleID) {
+                await Spec.findOne(
+                    { 'specList._id': style },
+                    { _id: 0, specType: 1, 'specList.$': 1 }
+                ).then((doc) => {
+                    let _type = doc.specType
+                    let sty = doc.specList[0].style
+                    // console.log(`${_type} ${sty}`)
+                    element.type += `${_type} ${sty} `
+                })
+            }
+        }    
+    } catch (error) {
+        
     }
 
     await next().then(() => {

@@ -279,6 +279,9 @@ router.get('/goodslist', async (ctx, next) => {
             .skip((page - 1) * 12)
             .limit(12)
             .then((doc) => {
+                for(const item of doc) {
+                    item.homeImg = convertImgPath(item.homeImg)
+                }
                 return next().then(() => {
                     ctx.response.body = {
                         code: '200',
