@@ -83,7 +83,13 @@ router.get('/', async (ctx, next) => {
 
 //后台添加商品
 router.post('/', async (ctx, next) => {
-    let req = ctx.request.body
+    let req = ctx.request.body,
+        {homeImg, goodsImg} = req,
+        homeImg64 = homeImg.replace(/^data:image\/\w+;base64,/, ''),
+        homeImgBuffer = new Buffer.from(homeImg64, 'base64'),
+        goodsImg64 = goodsImg.replace(/^data:image\/\w+;base64,/, ''),
+        goodsImgBuffer = new Buffer.from(goodsImg64, 'base64')
+        
     if (JSON.stringify(req) === '{}') {
         ctx.response.body = {
             code: '404',
@@ -91,9 +97,8 @@ router.post('/', async (ctx, next) => {
         }
         return next()
     }
-    let item = new Goods(req)
-    item.homeImg = '-images-goods-homeimg-default.jpg'
-    item.goodsImg = '-images-goods-homeimg-default.jpg'
+    // let item = new Goods(req)
+
     await item
         .save()
         .then(() => {

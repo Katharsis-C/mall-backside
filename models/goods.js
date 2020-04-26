@@ -2,6 +2,7 @@ const mongoose = require("mongoose")
 
 const goodsSchema = mongoose.Schema(
     {
+        _id: {type: String, required: true},
         itemName: { type: String, required: true },
         homeImg: { type: String },
         goodsImg: { type: String },

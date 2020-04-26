@@ -50,35 +50,42 @@ router.get('/getnews', async (ctx, next) => {
 
 //后台添加新闻
 router.post('/', async (ctx, next) => {
-    let { title: reqTitle, content: reqContent, picture } = ctx.request.body,
+    let {
+            _id: id,
+            title: reqTitle,
+            content: reqContent,
+            picture,
+        } = ctx.request.body,
         base64Data = picture.replace(/^data:image\/\w+;base64,/, ''),
         dataBUffer = new Buffer.from(base64Data, 'base64'),
         news = null
     try {
-        fs.writeFile(`./public/images/news/${reqTitle}.jpg`, dataBUffer, function (
-            err
-        ) {
-            if (!!err) {
-                console.log(err)
-            } else {
-                news = new News({
-                    title: reqTitle,
-                    content: reqContent,
-                    time: current,
-                    picture: `-images-news-${reqTitle}.jpg`,
-                })
-                news.save()
+        fs.writeFile(
+            `./public/images/news/${id}.jpg`,
+            dataBUffer,
+            function (err) {
+                if (!!err) {
+                    console.log(err)
+                } else {
+                    news = new News({
+                        _id: id,
+                        title: reqTitle,
+                        content: reqContent,
+                        time: current,
+                        picture: `-images-news-${id}.jpg`,
+                    })
+                    news.save()
+                }
             }
-        })
+        )
         ctx.response.body = {
             code: '200',
-            msg: '发布新闻成功'
+            msg: '发布新闻成功',
         }
-    
     } catch (error) {
         ctx.response.body = {
             code: '-1',
-            msg: '发布新闻失败'
+            msg: '发布新闻失败',
         }
     }
 })
