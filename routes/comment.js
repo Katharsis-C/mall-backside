@@ -54,12 +54,13 @@ router.get('/', async (ctx, next) => {
                             itemName,
                             type,
                             time,
-                            homeImg: convertImgPath(homeImg),
+                            homeImg: (homeImg),
                             content,
                         }
                         resList.push(tmpObj)
                     }
                     return resList
+                    console.log(doc)
                 })
             total = await Comment.countDocuments(
                 { userId: id },
@@ -76,7 +77,7 @@ router.get('/', async (ctx, next) => {
                         let { userId, type, time, content } = item
                         let { nickname, avatarPath } = userId
                         let tmpObj = {
-                            avatarPath: convertImgPath(avatarPath),
+                            avatarPath: (avatarPath),
                             nickname,
                             type,
                             time,
@@ -109,7 +110,7 @@ router.get('/', async (ctx, next) => {
 
 //添加评论
 router.post('/', async (ctx, next) => {
-    let { userID: userId, itemID: itemId, content, type } = ctx.request.body,
+    let { userID: userId, itemID: itemId, comment: content, type } = ctx.request.body,
         date = new Date(),
         current = `${date.getFullYear()}-${
             date.getMonth() + 1

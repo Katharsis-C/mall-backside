@@ -15,7 +15,7 @@ const findAndReturn = require('../utils/findAndReturn')
 const secret = 'UMP45'
 
 //连接数据库
-const DB_URL = 'mongodb://localhost:27017/learning'
+const DB_URL = 'mongodb://localhost:27017/test'
 
 const checkAccount = function (account) {
     const emailREG = /^\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/
@@ -65,9 +65,7 @@ router.post('/login', async (ctx, next) => {
                 ctx.response.body = {
                     code: '200',
                     msg: '登录成功',
-                    userID: doc._id,
-                    nickname: doc.nickname,
-                    userAvatar: convertImgPath(doc.avatarPath),
+                    user: doc,
                     token: token,
                 }
             } else {
@@ -192,7 +190,6 @@ router.get('/info', async (ctx, next) => {
             collects: 0,
         }
         await User.findOne({ _id: id }, projection).then((doc) => {
-            doc.avatarPath = convertImgPath(doc.avatarPath)
             ctx.response.body = {
                 code: '200',
                 data: doc,

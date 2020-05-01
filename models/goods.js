@@ -1,13 +1,13 @@
-const mongoose = require("mongoose")
+const mongoose = require('mongoose')
 
 const goodsSchema = mongoose.Schema(
     {
-        _id: {type: String, required: true},
+        _id: { type: String, required: true },
         itemName: { type: String, required: true },
         homeImg: { type: String },
         goodsImg: { type: String },
-        newPrice: {type: Number},
-        oldPrice: {type: Number, required: true},
+        newPrice: { type: Number },
+        oldPrice: { type: Number, required: true },
         stock: { type: Number, required: true },
         salesCount: { type: Number, required: true },
         collectCount: { type: Number, required: true },
@@ -20,4 +20,4 @@ const goodsSchema = mongoose.Schema(
     { versionKey: false }
 )
 
-module.exports = mongoose.model("Goods", goodsSchema)
+module.exports = mongoose.model('Goods', goodsSchema)

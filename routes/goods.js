@@ -85,10 +85,10 @@ router.get('/', async (ctx, next) => {
 router.post('/', async (ctx, next) => {
     let req = ctx.request.body,
         {homeImg, goodsImg} = req,
-        homeImg64 = homeImg.replace(/^data:image\/\w+;base64,/, ''),
-        homeImgBuffer = new Buffer.from(homeImg64, 'base64'),
-        goodsImg64 = goodsImg.replace(/^data:image\/\w+;base64,/, ''),
-        goodsImgBuffer = new Buffer.from(goodsImg64, 'base64')
+        homeImg64 = homeImg ? homeImg.replace(/^data:image\/\w+;base64,/, '') : undefined,
+        homeImgBuffer = homeImg64 ? new Buffer.from(homeImg64, 'base64') : undefined,
+        goodsImg64 = goodsImg ? goodsImg.replace(/^data:image\/\w+;base64,/, '') : undefined,
+        goodsImgBuffer = goodsImg64 ? new Buffer.from(goodsImg64, 'base64') : undefined
         
     if (JSON.stringify(req) === '{}') {
         ctx.response.body = {
@@ -97,8 +97,8 @@ router.post('/', async (ctx, next) => {
         }
         return next()
     }
-    // let item = new Goods(req)
-
+    let item = new Goods(req)
+    item._id = 2
     await item
         .save()
         .then(() => {

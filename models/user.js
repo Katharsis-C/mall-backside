@@ -16,7 +16,7 @@ const userSchema = mongoose.Schema(
         order: [{ type: mongoose.Types.ObjectId, ref: 'Order' }],
         couponList: [{ type: mongoose.Types.ObjectId, ref: 'couponRec' }],
         pay: String,
-        collects: [{ type: mongoose.Types.ObjectId, ref: 'Goods' }],
+        collects: [{ type: String, ref: 'Goods' }],
         qa: { question: String, answer: String },
     },
     { versionKey: false }

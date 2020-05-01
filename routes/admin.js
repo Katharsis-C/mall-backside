@@ -68,35 +68,7 @@ router.get('/getuser', async (ctx, next) => {
 
     let total = await User.estimatedDocumentCount((error, count) => count),
         { page, size } = ctx.query
-    await User.find({}, projection)
-        .skip((page - 1) * size)
-        .limit(Number(size))
-        .populate([
-            {
-                path: 'addressList',
-            },
-            {
-                path: 'collects',
-            },
-            {
-                path: 'comment'
-            },
-            {
-                path: 'order'
-            }
-        ])
-        .then((doc) => {
-            if (doc) {
-                ctx.response.body = {
-                    code: '200',
-                    msg: '请求用户信息成功',
-                    data: doc,
-                    total: total,
-                }
-            } else {
-                return next()
-            }
-        })
+
     // ctx.response.body = {
     //     code: "200",
     //     msg: "请求用户信息成功",
@@ -140,6 +112,28 @@ router.get('/getorder', async (ctx, next) => {
     }
 })
 
+//统计数据
+router.get('/revenue', async (ctx, next) => {
+    try {
+        let orders = await Order.find({}).then((doc) => {
+            let res = []
+            for (const item of doc) {
+                res.push(item.total)
+            }
+            return res
+        })
+        let revenue = orders.reduce((acc, cur) => acc + cur)
+        return next().then(() => {
+            ctx.response.body = {
+                code: '200',
+                data: {
+                    revenue: revenue
+                }
+            }
+        })
+    } catch (error) {}
+})
+
 // router.post('/search', async (ctx, next) => {
 //     let { keyword } = ctx.request.body
 //     if (!keyword) {
@@ -162,7 +156,5 @@ router.get('/getorder', async (ctx, next) => {
 //         }
 //     })
 // })
-
-
 
 module.exports = router

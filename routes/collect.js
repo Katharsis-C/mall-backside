@@ -2,6 +2,7 @@
 
 const router = require('koa-router')()
 const User = require('../models/user')
+const Goods = require('../models/goods')
 
 router.prefix('/collect')
 
@@ -22,27 +23,28 @@ router.get('/', async (ctx, next) => {
         coupon: 0,
         order: 0,
         qa: 0,
-        pay: 0
+        pay: 0,
     }
     let { id } = ctx.query
     try {
         await User.findOne({ _id: id }, projection)
             .populate({
                 path: 'collects',
-                select: '_id itemName price price salesCount homeImg oldPrice newPrice'
+                select:
+                    '_id itemName price price salesCount homeImg oldPrice newPrice',
             })
-            .then(doc => {
+            .then((doc) => {
                 console.log(doc)
                 ctx.response.body = {
                     code: '200',
-                    data: doc.collects
+                    data: doc.collects,
                 }
             })
     } catch (error) {
         return next().then(() => {
             ctx.response.body = {
                 code: '-1',
-                msg: '错误'
+                msg: '错误',
             }
         })
     }
@@ -55,20 +57,24 @@ router.post('/', async (ctx, next) => {
         await User.updateOne(
             { _id: userID },
             { $addToSet: { collects: itemID } }
-        ).then(doc => {
+        ).then(async (doc) => {
+            // console.log(doc)
             if (doc.nModified !== 0) {
+                await Goods.updateOne({ _id: itemID }, { $inc: { collectCount: 1 } })
                 ctx.response.body = {
                     code: '200',
-                    msg: '添加收藏成功'
+                    msg: '添加收藏成功',
                 }
             } else {
                 ctx.response.body = {
                     code: '404',
-                    msg: '已经在收藏中'
+                    msg: '已经在收藏中',
                 }
             }
         })
-    } catch (error) {}
+    } catch (error) {
+        console.log(error)
+    }
 })
 
 //删除收藏 需用户的id和商品的id
@@ -78,7 +84,7 @@ router.delete('/', async (ctx, next) => {
         return next().then(() => {
             ctx.response.body = {
                 code: '-1',
-                msg: '错误'
+                msg: '错误',
             }
         })
     }
@@ -86,16 +92,17 @@ router.delete('/', async (ctx, next) => {
         await User.updateOne(
             { _id: userID },
             { $pull: { collects: itemID } }
-        ).then(doc => {
+        ).then(async (doc) => {
             if (doc.nModified !== 0) {
+                await Goods.updateOne({ _id: itemID }, { $inc: { collectCount: -1 } })
                 ctx.response.body = {
                     code: '200',
-                    msg: '删除收藏成功'
+                    msg: '删除收藏成功',
                 }
             } else {
                 ctx.response.body = {
                     code: '404',
-                    msg: '没有要删除的收藏商品'
+                    msg: '没有要删除的收藏商品',
                 }
             }
         })
@@ -103,14 +110,41 @@ router.delete('/', async (ctx, next) => {
         return next().then(() => {
             ctx.response.body = {
                 code: '-1',
-                msg: '错误'
+                msg: '错误',
             }
         })
     }
 })
 
-router.post('/', async(ctx, next) =>{
-    
+// 判断收藏
+router.post('/has', async (ctx, next) => {
+    try {
+        let { userId, itemId } = ctx.request.body,
+            user = await User.findOne({ _id: userId }).then((doc) => doc)
+        // console.log(user)
+        let collectList = user.collects.filter((item) => item == itemId)
+        if (collectList.length > 0) {
+            ctx.response.body = {
+                code: '200',
+                data: {
+                    isCollected: true
+                }
+            }
+        } else {
+            ctx.response.body = {
+                code: '200',
+                data: {
+                    isCollected: false
+                }
+            }
+        }
+    } catch (error) {
+        console.log(error)
+        ctx.response.body = {
+            code: '-1',
+            msg: 'error',
+        }
+    }
 })
 
 module.exports = router
