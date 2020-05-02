@@ -98,7 +98,7 @@ router.post('/', async (ctx, next) => {
         return next()
     }
     let item = new Goods(req)
-    item._id = 2
+    item._id = Math.trunc(Math.random() * 100)
     await item
         .save()
         .then(() => {
@@ -123,6 +123,7 @@ router.put('/', async (ctx, next) => {
     delete req.id
     // console.log(id)
     // console.log(req)
+    await Goods.updateOne({ _id: id }, {$unset: {newPrice: ''}}) 
     await Goods.updateOne({ _id: id }, req).then((doc) => {
         console.log(doc)
         if (doc.nModified === 0) {
