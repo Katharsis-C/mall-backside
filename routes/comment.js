@@ -3,6 +3,7 @@ const Goods = require('../models/goods')
 const User = require('../models/user')
 const Comment = require('../models/comment')
 const mongoose = require('mongoose')
+const Order = require('../models/order')
 
 const findAndReturn = require('../utils/findAndReturn')
 const convertImgPath = require('../utils/convertImgPath')
@@ -54,7 +55,7 @@ router.get('/', async (ctx, next) => {
                             itemName,
                             type,
                             time,
-                            homeImg: (homeImg),
+                            homeImg: homeImg,
                             content,
                         }
                         resList.push(tmpObj)
@@ -77,7 +78,7 @@ router.get('/', async (ctx, next) => {
                         let { userId, type, time, content } = item
                         let { nickname, avatarPath } = userId
                         let tmpObj = {
-                            avatarPath: (avatarPath),
+                            avatarPath: avatarPath,
                             nickname,
                             type,
                             time,
@@ -110,7 +111,13 @@ router.get('/', async (ctx, next) => {
 
 //添加评论
 router.post('/', async (ctx, next) => {
-    let { userID: userId, itemID: itemId, comment: content, type } = ctx.request.body,
+    let {
+            userID: userId,
+            itemID: itemId,
+            comment: content,
+            type,
+            orderId,
+        } = ctx.request.body,
         date = new Date(),
         current = `${date.getFullYear()}-${
             date.getMonth() + 1
@@ -144,7 +151,8 @@ router.post('/', async (ctx, next) => {
         { $addToSet: { comment: commentObj._id } }
     )
 
-    await commentObj.save().then(() => {
+    await commentObj.save().then(async () => {
+        await Order.updateOne({ orderId: orderId }, { status: '已评价' })
         ctx.response.body = {
             code: '200',
             msg: '评论成功',
