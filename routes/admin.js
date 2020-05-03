@@ -116,18 +116,24 @@ router.get('/getorder', async (ctx, next) => {
 router.get('/revenue', async (ctx, next) => {
     try {
         let orders = await Order.find({}).then((doc) => {
-            let res = []
-            for (const item of doc) {
-                res.push(item.total)
+            let res = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+            for (let i = 0; i < 12; i++) {
+                console.log(`i = ${i}`)
+                for (const item of doc) {
+                    if (item.orderTime.indexOf(`-${i + 1}-`) != -1) {
+                        res[i] += item.total
+                        console.log(res)
+                    }
+                }
             }
+
             return res
         })
-        let revenue = orders.reduce((acc, cur) => acc + cur)
         return next().then(() => {
             ctx.response.body = {
                 code: '200',
                 data: {
-                    revenue: revenue
+                    revenue: orders
                 }
             }
         })

@@ -34,9 +34,9 @@ router.get('/getnews', async (ctx, next) => {
         .then((doc) => {
             if (doc) {
                 let resList = doc
-                for (let item of resList) {
-                    item.picture = convertImgPath(item.picture)
-                }
+                // for (let item of resList) {
+                //     item.picture = convertImgPath(item.picture)
+                // }
                 // console.log(resList)
                 ctx.response.body = {
                     code: '200',
@@ -56,28 +56,40 @@ router.post('/', async (ctx, next) => {
             content: reqContent,
             picture,
         } = ctx.request.body,
-        base64Data = picture.replace(/^data:image\/\w+;base64,/, ''),
-        dataBUffer = new Buffer.from(base64Data, 'base64'),
-        news = null
+        news = null,
+        base64Data = null,
+        dataBUffer = null
     try {
-        fs.writeFile(
-            `./public/images/news/${id}.jpg`,
-            dataBUffer,
-            function (err) {
-                if (!!err) {
-                    console.log(err)
-                } else {
-                    news = new News({
-                        _id: id,
-                        title: reqTitle,
-                        content: reqContent,
-                        time: current,
-                        picture: `-images-news-${id}.jpg`,
-                    })
-                    news.save()
+        if (!!picture) {
+            base64Data = picture.replace(/^data:image\/\w+;base64,/, '')
+            dataBUffer = new Buffer.from(base64Data, 'base64')
+            fs.writeFile(
+                `./public/images/news/${id}.jpg`,
+                dataBUffer,
+                function (err) {
+                    if (!!err) {
+                        console.log(err)
+                    } else {
+                        news = new News({
+                            _id: id,
+                            title: reqTitle,
+                            content: reqContent,
+                            time: current,
+                            picture: `-images-news-${id}.jpg`,
+                        })
+                        news.save()
+                    }
                 }
-            }
-        )
+            )
+        } else {
+            news = new News({
+                _id: id,
+                title: reqTitle,
+                content: reqContent,
+                time: current,
+            })
+            news.save()
+        }
         ctx.response.body = {
             code: '200',
             msg: '发布新闻成功',
@@ -92,39 +104,62 @@ router.post('/', async (ctx, next) => {
 
 //后台修改新闻
 router.put('/', async (ctx, next) => {
-    let { _id, title, content } = ctx.request.body
-    let pic = ctx.request.file
-    let savePath = pic.path
-        .replace(new RegExp('public'), '')
-        .replace(/\\/g, '-')
-    let news = {
-        time: current,
-        _id: _id,
-        title: title,
-        content: content,
-        picture: savePath,
-    }
-    await News.updateOne(
-        { _id: news._id },
-        {
-            time: news.time,
-            title: news.title,
-            content: news.content,
-            picture: news.picture,
-        }
-    ).then((doc) => {
-        if (doc.nModified !== 0) {
-            ctx.response.body = {
-                code: '200',
-                msg: '修改新闻成功',
-            }
+    let {
+            _id: id,
+            title: reqTitle,
+            content: reqContent,
+            picture,
+        } = ctx.request.body,
+        base64Data = null,
+        dataBUffer = null,
+        news = null
+    try {
+        if (!!picture && picture.indexOf('-images-news-') == -1) {
+            base64Data = picture
+                ? picture.replace(/^data:image\/\w+;base64,/, '')
+                : undefined
+            dataBUffer = base64Data
+                ? new Buffer.from(base64Data, 'base64')
+                : undefined
+            console.log(base64Data, dataBUffer)
+            fs.writeFile(
+                `./public/images/news/${id}.jpg`,
+                dataBUffer,
+                (err) => {
+                    if (!!err) {
+                        console.log(err)
+                    } else {
+                        console.log('pic', news)
+                    }
+                }
+            )
         } else {
-            ctx.response.body = {
-                code: '404',
-                msg: '没有要修改的地方',
-            }
+            console.log('no pic', news)
         }
-    })
+        await News.updateOne(
+            { _id: id },
+            { title: reqTitle, content: reqContent, picture: `-images-news-${id}.jpg` }
+        ).then((doc) => {
+            console.log(doc)
+            if (doc.nModified !== 0) {
+                ctx.response.body = {
+                    code: '200',
+                    msg: '修改地址成功',
+                }
+            } else {
+                ctx.response.body = {
+                    code: '404',
+                    msg: '没有要改变的地方',
+                }
+            }
+        })
+    } catch (error) {
+        console.log(error)
+        ctx.response.body = {
+            code: '-1',
+            msg: '修改出错',
+        }
+    }
 })
 
 //后台删除新闻
