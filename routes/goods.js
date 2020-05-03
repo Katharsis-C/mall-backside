@@ -2,6 +2,7 @@ const router = require('koa-router')()
 const Goods = require('../models/goods')
 const Category = require('../models/category')
 const Spec = require('../models/specification')
+const fs = require('fs')
 
 router.prefix('/goods')
 
@@ -9,9 +10,8 @@ const createItem = function (obj) {
     let itemObj = {
         id: obj._id,
         itemName: obj.itemName,
-        homeImg: obj.homeImg,
-        goodsImg: obj.goodsImg,
-        price: obj.price,
+        oldPrice: obj.oldPrice,
+        newPrice: obj.newPrice ? obj.newPrice : undefined,
         stock: obj.stock,
         salesCount: obj.salesCount,
         collectCount: obj.collectCount,
@@ -21,6 +21,8 @@ const createItem = function (obj) {
         styleID: obj.styleID,
         type: '',
         styleList: null,
+        homeImg: obj.homeImg,
+        goodsImg: obj.goodsImg
     }
     return itemObj
 }
@@ -43,6 +45,7 @@ router.get('/', async (ctx, next) => {
                 // console.log(doc)
             }
         })
+        // console.log(resList)
     try {
         for (let element of resList) {
             await Category.findOne(
@@ -50,7 +53,7 @@ router.get('/', async (ctx, next) => {
                 { property: 0, category: 0 }
             )
                 .populate('specs')
-    
+
                 .then((doc) => {
                     // console.log(doc)
                     element.styleList = doc.specs
@@ -66,9 +69,8 @@ router.get('/', async (ctx, next) => {
                     element.type += `${_type} ${sty} `
                 })
             }
-        }    
-    } catch (error) {    
-    }
+        }
+    } catch (error) {}
 
     await next().then(() => {
         // console.log(resList)
@@ -83,37 +85,88 @@ router.get('/', async (ctx, next) => {
 
 //后台添加商品
 router.post('/', async (ctx, next) => {
-    let req = ctx.request.body,
-        {homeImg, goodsImg} = req,
-        homeImg64 = homeImg ? homeImg.replace(/^data:image\/\w+;base64,/, '') : undefined,
-        homeImgBuffer = homeImg64 ? new Buffer.from(homeImg64, 'base64') : undefined,
-        goodsImg64 = goodsImg ? goodsImg.replace(/^data:image\/\w+;base64,/, '') : undefined,
-        goodsImgBuffer = goodsImg64 ? new Buffer.from(goodsImg64, 'base64') : undefined
-        
-    if (JSON.stringify(req) === '{}') {
-        ctx.response.body = {
-            code: '404',
-            msg: '提交数据错误',
+    let obj = ctx.request.body,
+        { homeImg, goodsImg } = obj,
+        homeImg64 = homeImg
+            ? homeImg.replace(/^data:image\/\w+;base64,/, '')
+            : undefined,
+        homeImgBuffer = homeImg64
+            ? new Buffer.from(homeImg64, 'base64')
+            : undefined,
+        goodsImg64 = goodsImg
+            ? goodsImg.replace(/^data:image\/\w+;base64,/, '')
+            : undefined,
+        goodsImgBuffer = goodsImg64
+            ? new Buffer.from(goodsImg64, 'base64')
+            : undefined,
+        itemObj = {}
+    // console.log('homeimg', homeImg)
+    // console.log('goodsimg', goodsImg)
+    // console.log('homeImg64', homeImg64)
+    // console.log('homeImgBuffer', homeImgBuffer)
+    // console.log('goodsImg64', goodsImg64)
+    // console.log('goodsImgBuffer', goodsImgBuffer)
+    // console.log(item)
+
+    try {
+        itemObj = new Goods({
+            _id: Math.trunc(Math.random() * 10000),
+            itemName: obj.itemName,
+            oldPrice: obj.oldPrice,
+            newPrice: obj.newPrice ? obj.newPrice : undefined,
+            stock: obj.stock,
+            salesCount: obj.salesCount,
+            collectCount: obj.collectCount,
+            rateCount: obj.rateCount,
+            itemDetail: obj.itemDetail,
+            junior: obj.junior,
+            styleID: obj.styleID,
+            type: '',
+            styleList: null,
+            homeImg: null,
+            goodsImg: null,
+        })
+        if (!!homeImgBuffer || !!goodsImgBuffer) {
+            if (!!homeImgBuffer) {
+                fs.writeFile(
+                    `./public/images/goods/homeImg/${itemObj._id}.jpg`,
+                    homeImgBuffer,
+                    (err) => {
+                        if (!!err) {
+                            console.log(err)
+                        }
+                    }
+                )
+                itemObj.homeImg = `-images-goods-homeImg-${itemObj._id}.jpg`
+            }
+            if (!!goodsImgBuffer) {
+                console.log('goodsimg')
+                fs.writeFile(
+                    `./public/images/goods/goodsImg/${itemObj._id}.jpg`,
+                    goodsImgBuffer,
+                    (err) => {
+                        if (!!err) {
+                            console.log(err)
+                        }
+                    }
+                )
+                itemObj.goodsImg = `-images-goods-goodsImg-${itemObj._id}.jpg`
+            }
         }
-        return next()
-    }
-    let item = new Goods(req)
-    item._id = Math.trunc(Math.random() * 100)
-    await item
-        .save()
-        .then(() => {
+        itemObj.save()
+        return next().then(() => {
             ctx.response.body = {
                 code: '200',
-                msg: '添加商品成功',
+                msg: '添加成功',
             }
         })
-        .catch((err) => {
-            console.log(err)
-            ctx.response.body = {
-                code: '404',
-                msg: '添加商品失败',
-            }
-        })
+    } catch (error) {
+        console.log(error)
+        ctx.response.body = {
+            code: '-1',
+            msg: '添加商品失败',
+        }
+    }
 })
 
 //后台修改商品
@@ -121,25 +174,86 @@ router.put('/', async (ctx, next) => {
     let req = ctx.request.body
     let id = ctx.request.body.id
     delete req.id
+    console.log(id)
     // console.log(id)
     // console.log(req)
-    await Goods.updateOne({ _id: id }, {$unset: {newPrice: ''}}) 
-    await Goods.updateOne({ _id: id }, req).then((doc) => {
-        console.log(doc)
-        if (doc.nModified === 0) {
-            ctx.response.body = {
-                code: '404',
-                msg: '没有修改的商品',
-                // doc
-            }
-        } else {
-            ctx.response.body = {
-                code: '200',
-                msg: '修改商品信息成功',
-                // doc
-            }
+    // await Goods.updateOne({ _id: id }, req).then((doc) => {
+    //     console.log(doc)
+        // if (doc.nModified === 0) {
+        //     ctx.response.body = {
+        //         code: '404',
+        //         msg: '没有修改的商品',
+        //         // doc
+        //     }
+        // } else {
+        //     ctx.response.body = {
+        //         code: '200',
+        //         msg: '修改商品信息成功',
+        //         // doc
+        //     }
+        // }
+    // })
+    try {
+        await Goods.updateOne({ _id: id }, { $unset: { newPrice: '' } })
+
+        if(!!req.homeImg && req.homeImg.indexOf(`-images-goods-`) == -1) {
+            // console.log('home')
+            let base64Data = req.homeImg.replace(/^data:image\/\w+;base64,/, '')
+            let dataBUffer = new Buffer.from(base64Data, 'base64')
+            console.log('databuf home', dataBUffer)
+            fs.writeFile(
+                `./public/images/goods/homeimg/${id}.jpg`,
+                dataBUffer,
+                (err) => {
+                    if (!!err) {
+                        console.log(err)
+                    } else {
+                        console.log('pic')
+                    }
+                }
+            )
         }
-    })
+
+        if(!!req.goodsImg && req.goodsImg.indexOf(`-images-goods-`) == -1) {
+            console.log('goods')
+            let base64Data = req.goodsImg.replace(/^data:image\/\w+;base64,/, '')
+            let dataBUffer = new Buffer.from(base64Data, 'base64')
+            console.log('databuf goods', dataBUffer)
+            fs.writeFile(
+                `./public/images/goods/goodsimg/${id}.jpg`,
+                dataBUffer,
+                (err) => {
+                    if (!!err) {
+                        console.log(err)
+                    } else {
+                        console.log('pic')
+                    }
+                }
+            )
+        }
+        
+        delete req.homeImg
+        delete req.goodsImg
+
+        await Goods.updateOne({_id: id}, req).then(doc => {
+            if (doc.nModified === 0) {
+                ctx.response.body = {
+                    code: '404',
+                    msg: '没有修改的商品',
+                    // doc
+                }
+            } else {
+                ctx.response.body = {
+                    code: '200',
+                    msg: '修改商品信息成功',
+                    // doc
+                }
+            }
+        })
+
+    } catch (error) {
+        
+    }
 })
 
 //后台删除商品
