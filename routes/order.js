@@ -4,6 +4,7 @@ const router = require('koa-router')()
 const mongoose = require('mongoose')
 const User = require('../models/user')
 const Order = require('../models/order')
+const Goods = require('../models/goods')
 
 router.prefix('/order')
 
@@ -87,7 +88,13 @@ router.post('/', async (ctx, next) => {
                 express: express,
                 address: address,
             })
+            for(const item of itemList) {
+                await Goods.updateOne({_id: item.shopId}, {$inc:{salesCount: 1}}).then(doc => {
+                    console.log('doc', doc)
+                })
+            }
         await orderModel.save()
+        await 
         await User.updateOne(
             { _id: userID },
             { $addToSet: { order: objID } }
