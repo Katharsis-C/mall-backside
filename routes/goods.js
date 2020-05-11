@@ -3,6 +3,7 @@ const Goods = require('../models/goods')
 const Category = require('../models/category')
 const Spec = require('../models/specification')
 const fs = require('fs')
+const mongoose = require('mongoose')
 
 router.prefix('/goods')
 
@@ -22,7 +23,7 @@ const createItem = function (obj) {
         type: '',
         styleList: null,
         homeImg: obj.homeImg,
-        goodsImg: obj.goodsImg
+        goodsImg: obj.goodsImg,
     }
     return itemObj
 }
@@ -45,7 +46,7 @@ router.get('/', async (ctx, next) => {
                 // console.log(doc)
             }
         })
-        // console.log(resList)
+    // console.log(resList)
     try {
         for (let element of resList) {
             await Category.findOne(
@@ -173,30 +174,40 @@ router.post('/', async (ctx, next) => {
 router.put('/', async (ctx, next) => {
     let req = ctx.request.body
     let id = ctx.request.body.id
+    let {homeImg, goodsImg} = req
     delete req.id
     console.log(id)
     // console.log(id)
     // console.log(req)
     // await Goods.updateOne({ _id: id }, req).then((doc) => {
     //     console.log(doc)
-        // if (doc.nModified === 0) {
-        //     ctx.response.body = {
-        //         code: '404',
-        //         msg: '没有修改的商品',
-        //         // doc
-        //     }
-        // } else {
-        //     ctx.response.body = {
-        //         code: '200',
-        //         msg: '修改商品信息成功',
-        //         // doc
-        //     }
-        // }
+    // if (doc.nModified === 0) {
+    //     ctx.response.body = {
+    //         code: '404',
+    //         msg: '没有修改的商品',
+    //         // doc
+    //     }
+    // } else {
+    //     ctx.response.body = {
+    //         code: '200',
+    //         msg: '修改商品信息成功',
+    //         // doc
+    //     }
+    // }
     // })
     try {
         await Goods.updateOne({ _id: id }, { $unset: { newPrice: '' } })
+        if(!homeImg) { 
+            console.log('no homeImg')
+            await Goods.updateOne({ _id: id }, { $unset: { homeImg: '' } })
+        }
+        if(!goodsImg) {
+            console.log('no goodsImg')
+            await Goods.updateOne({ _id: id }, { $unset: { goodsImg: '' } })
+        }
 
-        if(!!req.homeImg && req.homeImg.indexOf(`-images-goods-`) == -1) {
+
+        if (!!req.homeImg && req.homeImg.indexOf(`-images-goods-`) == -1) {
             // console.log('home')
             let base64Data = req.homeImg.replace(/^data:image\/\w+;base64,/, '')
             let dataBUffer = new Buffer.from(base64Data, 'base64')
@@ -212,11 +223,15 @@ router.put('/', async (ctx, next) => {
                     }
                 }
             )
+            await Goods.updateOne({_id: id}, {homeImg: `-images-goods-homeimg-${id}.jpg`})
         }
 
-        if(!!req.goodsImg && req.goodsImg.indexOf(`-images-goods-`) == -1) {
+        if (!!req.goodsImg && req.goodsImg.indexOf(`-images-goods-`) == -1) {
             console.log('goods')
-            let base64Data = req.goodsImg.replace(/^data:image\/\w+;base64,/, '')
+            let base64Data = req.goodsImg.replace(
+                /^data:image\/\w+;base64,/,
+                ''
+            )
             let dataBUffer = new Buffer.from(base64Data, 'base64')
             console.log('databuf goods', dataBUffer)
             fs.writeFile(
@@ -230,12 +245,13 @@ router.put('/', async (ctx, next) => {
                     }
                 }
             )
+            await Goods.updateOne({_id: id}, {goodsImg: `-images-goods-goodsimg-${id}.jpg`})
         }
-        
+
         delete req.homeImg
         delete req.goodsImg
 
-        await Goods.updateOne({_id: id}, req).then(doc => {
+        await Goods.updateOne({ _id: id }, req).then((doc) => {
             if (doc.nModified === 0) {
                 ctx.response.body = {
                     code: '404',
@@ -250,10 +266,7 @@ router.put('/', async (ctx, next) => {
                 }
             }
         })
-
-    } catch (error) {
-        
-    }
+    } catch (error) {}
 })
 
 //后台删除商品
@@ -277,39 +290,94 @@ router.delete('/', async (ctx, next) => {
 
 //前台首页 随机商品
 router.get('/todayrecommend', async (ctx, next) => {
-    let createObj = (obj) => {
-        let tmp = {
-            id: obj._id,
-            img: obj.homeImg,
-            name: obj.itemName,
-            price: obj.price,
-        }
-        return tmp
-    }
+    let { size } = ctx.query
     try {
-        await Goods.aggregate([{ $match: {} }, { $sample: { size: 3 } }]).then(
-            (doc) => {
-                let resList = []
-                for (const item of doc) {
-                    resList.push(createObj(item))
-                }
-                // console.log(resList)
-                return next().then(() => {
-                    ctx.response.body = {
-                        code: '200',
-                        msg: '获取成功',
-                        data: resList,
-                    }
-                })
+        await Goods.aggregate([
+            { $match: {} },
+            { $sample: { size: Number(size) } },
+        ]).then((doc) => {
+            let resList = []
+            for (const item of doc) {
+                resList.push(item)
             }
-        )
-    } catch {
+            // console.log(resList)
+            return next().then(() => {
+                ctx.response.body = {
+                    code: '200',
+                    msg: '获取成功',
+                    data: resList,
+                }
+            })
+        })
+    } catch (error) {
+        console.log(error)
         ctx.response.body = {
             code: '-1',
             msg: '获取错误',
         }
     }
 })
+
+//前台首页 随机分类商品
+router.get('/random', async (ctx, next) => {
+    try {
+        let propId = await Category.aggregate([
+            {$match: {}},
+            {$sample: {size: 1}}
+        ]).then(doc => doc[0]._id)
+        let resList = await Goods.find({junior: propId}).then(doc => doc)
+        console.log('id', propId)
+        // console.log(resList)
+        for(const item of resList) {
+            item.id = item._id
+        }
+        return next().then(() => {
+            ctx.response.body = {
+                code: '200',
+                msg: '获取成功',
+                data: resList,
+            }
+        })
+    } catch (error) {
+        console.log(error)
+        ctx.response.body = {
+            code: '-1',
+            msg: '获取错误',
+        }
+    }
+})
+
+//前台首页 随机分类商品
+// router.get('/random', async (ctx, next) => {
+//     try {
+//         let { size, junior } = ctx.query
+//         console.log(junior)
+//         let resList = await Goods.aggregate([
+//             { $match: { junior: (junior) } },
+//             { $sample: { size: Number(size) } },
+//         ]).then((doc) => {
+//             console.log(doc)
+//             return doc
+//         })
+//         // await Category.findOne({_id: junior}).then(doc => {console.log(doc)})
+//         // let resList = await Goods.find({ junior: propId }).then((doc) => doc)
+//         // console.log('id', propId)
+//         // console.log(resList)
+//         return next().then(() => {
+//             ctx.response.body = {
+//                 code: '200',
+//                 msg: '获取成功',
+//                 data: resList,
+//             }
+//         })
+//     } catch (error) {
+//         console.log(error)
+//         ctx.response.body = {
+//             code: '-1',
+//             msg: '获取错误',
+//         }
+//     }
+// })
 
 //前台商品页
 router.get('/item', async (ctx, next) => {

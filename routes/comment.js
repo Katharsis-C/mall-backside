@@ -48,20 +48,25 @@ router.get('/', async (ctx, next) => {
                 .skip(size * (page - 1))
                 .limit(Number(size))
                 .then((doc) => {
-                    for (const item of doc) {
-                        let { itemId, type, time, content } = item
-                        let { itemName, homeImg } = itemId
-                        let tmpObj = {
-                            itemName,
-                            type,
-                            time,
-                            homeImg: homeImg,
-                            content,
-                        }
-                        resList.push(tmpObj)
-                    }
-                    return resList
                     console.log(doc)
+                    for (const item of doc) {
+                        try {
+                            let { itemId, type, time, content } = item
+                            let { itemName, homeImg } = itemId
+                            let tmpObj = {
+                                itemName,
+                                type,
+                                time,
+                                homeImg: homeImg,
+                                content,
+                            }
+                            resList.push(tmpObj)
+                        } catch (error) {
+                            console.log(error)
+                        }
+                    }
+
+                    return resList
                 })
             total = await Comment.countDocuments(
                 { userId: id },

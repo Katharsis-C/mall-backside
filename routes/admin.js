@@ -69,11 +69,16 @@ router.get('/getuser', async (ctx, next) => {
     let total = await User.estimatedDocumentCount((error, count) => count),
         { page, size } = ctx.query
 
-    // ctx.response.body = {
-    //     code: "200",
-    //     msg: "请求用户信息成功",
-    //     data: resList
-    // }
+    let res = await User.find({})
+        .skip((page - 1) * size)
+        .limit(Number(size))
+        .then(doc => doc)
+    ctx.response.body = {
+        code: '200',
+        msg: '请求用户信息成功',
+        data: res,
+        total: total,
+    }
 })
 
 //后台获取订单
@@ -133,8 +138,8 @@ router.get('/revenue', async (ctx, next) => {
             ctx.response.body = {
                 code: '200',
                 data: {
-                    revenue: orders
-                }
+                    revenue: orders,
+                },
             }
         })
     } catch (error) {}

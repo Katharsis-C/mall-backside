@@ -33,13 +33,7 @@ router.get('/', async function (ctx, next) {
     let i = 1
     let { page, pageSize } = ctx.query
 
-    let total = await Category.find({}).then((doc) => {
-        let tmpSet = new Set()
-        doc.forEach((ele) => {
-            tmpSet.add(ele.category)
-        })
-        return tmpSet.size
-    })
+    let total = await Category.estimatedDocumentCount((error, count) => count)
 
     await Category.find({})
         .skip((page - 1) * pageSize)
