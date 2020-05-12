@@ -15,7 +15,7 @@ const findAndReturn = require('../utils/findAndReturn')
 const secret = 'UMP45'
 
 //连接数据库
-const DB_URL = 'mongodb://localhost:27017/test'
+const DB_URL = 'mongodb://localhost:19030/test'
 
 const checkAccount = function (account) {
     const emailREG = /^\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/
