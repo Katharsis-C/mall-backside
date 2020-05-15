@@ -68,7 +68,7 @@ router.post('/', async (ctx, next) => {
                 express,
                 address,
             } = ctx.request.body,
-            current = `${date.getFullYear()}-${
+            current = `${date.getFullYear()}-${ 
                 date.getMonth() + 1
             }-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`,
             objID = mongoose.Types.ObjectId(),
@@ -89,7 +89,7 @@ router.post('/', async (ctx, next) => {
                 address: address,
             })
             for(const item of itemList) {
-                await Goods.updateOne({_id: item.shopId}, {$inc:{salesCount: 1}}).then(doc => {
+                await Goods.updateOne({_id: item.shopId}, {$inc:{salesCount: Number(item.count), stock: (-Number(item.count))}}).then(doc => {
                     console.log('doc', doc)
                 })
             }
