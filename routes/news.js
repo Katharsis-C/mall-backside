@@ -26,26 +26,21 @@ router.get('/getnews', async (ctx, next) => {
             } else {
                 return count
             }
-        })
-    await News.find({})
-        .skip((page - 1) * pageSize)
-        .sort({ _id: -1 })
-        .limit(Number(pageSize))
-        .then((doc) => {
-            if (doc) {
-                let resList = doc
-                // for (let item of resList) {
-                //     item.picture = convertImgPath(item.picture)
-                // }
-                // console.log(resList)
-                ctx.response.body = {
-                    code: '200',
-                    msg: '获取新闻成功',
-                    total: total,
-                    data: resList,
-                }
-            }
-        })
+        }),
+        res = await News.find({})
+            .skip((page - 1) * pageSize)
+            .sort({ _id: -1 })
+            .limit(Number(pageSize))
+            .then((doc) => doc)
+
+    return next().then(() => {
+        ctx.response.body = {
+            code: '200',
+            msg: '获取新闻成功',
+            data: res,
+            total: total,
+        }
+    })
 })
 
 //后台添加新闻
@@ -138,7 +133,11 @@ router.put('/', async (ctx, next) => {
         }
         await News.updateOne(
             { _id: id },
-            { title: reqTitle, content: reqContent, picture: `-images-news-${id}.jpg` }
+            {
+                title: reqTitle,
+                content: reqContent,
+                picture: `-images-news-${id}.jpg`,
+            }
         ).then((doc) => {
             console.log(doc)
             if (doc.nModified !== 0) {
