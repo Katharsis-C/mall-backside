@@ -8,6 +8,7 @@ const useMulter = require('../utils/koamultr')
 const convertImgPath = require('../utils/convertImgPath')
 const upload = useMulter('avatar')
 const findAndReturn = require('../utils/findAndReturn')
+const fs = require('fs')
 
 /**
  * JWT secret
@@ -199,7 +200,7 @@ router.get('/info', async (ctx, next) => {
 })
 
 //修改用户信息
-router.post('/info', upload.single('avatar'), async (ctx, next) => {
+router.post('/info', async (ctx, next) => {
     ctx.body = 'info'
     let {
         id,
@@ -209,8 +210,8 @@ router.post('/info', upload.single('avatar'), async (ctx, next) => {
         birth,
         userTel: tel,
         userEmail: email,
+        avatarPath: avatar,
     } = ctx.request.body
-    let pic = ctx.request.file
     // console.log(ctx.request.body)
     let data = {
         nickname: nickname,
@@ -220,10 +221,26 @@ router.post('/info', upload.single('avatar'), async (ctx, next) => {
         userTel: tel,
         userEmail: email,
     }
-    if (pic) {
-        let tmpPath = pic.path.replace(new RegExp('public'), '')
-        let savePath = tmpPath.replace(/\\/g, '-')
-        Object.assign(data, { avatarPath: savePath })
+
+    //handle avatar
+    if(!!avatar && avatar.indexOf(`-images-avatar-`) == -1) {
+        let base64Data = avatar.replace(/^data:image\/\w+;base64,/, '')
+        let dataBuffer = new Buffer.from(base64Data, 'base64')
+        console.log('object', dataBuffer)
+        fs.writeFile(
+            `./public/images/avatar/${id}.jpg`,
+            dataBuffer,
+            (err) => {
+                if (!!err) {
+                    console.log(err)
+                } else {
+                    console.log('pic')
+                }
+            }
+        )
+        await User.updateOne({_id: id}, {avatarPath: `-images-avatar-${id}.jpg`})
+    } else {
+        console.log(avatar)
     }
 
     try {

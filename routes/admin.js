@@ -30,6 +30,7 @@ const secret = 'UMP45'
 //后台登录
 router.post('/login', async (ctx, next) => {
     let { account: acc, password: pw } = ctx.request.body
+    console.log(acc, pw)
     await Admin.findOne({ account: acc }).then((doc) => {
         if (!doc) {
             ctx.response.body = {
