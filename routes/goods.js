@@ -320,17 +320,27 @@ router.get('/todayrecommend', async (ctx, next) => {
 
 //前台首页 随机分类商品
 router.get('/random', async (ctx, next) => {
-    try {
+
+    const randomIfLessThan6 = async () => {
         let propId = await Category.aggregate([
             {$match: {}},
             {$sample: {size: 1}}
         ]).then(doc => doc[0]._id)
-        let resList = await Goods.find({junior: propId}).then(doc => doc)
-        console.log('id', propId)
-        // console.log(resList)
-        for(const item of resList) {
-            item.id = item._id
+        let goodsList = await Goods.find({junior: propId}).then(doc => doc)
+        if(goodsList.length < 6) {
+            return randomIfLessThan6() 
+        } else {
+            for(const item of goodsList) {
+                item.id = item._id
+            }
+            return goodsList
         }
+    }
+
+
+    try {
+        let resList = await randomIfLessThan6()
+        console.log('reslist', resList)
         return next().then(() => {
             ctx.response.body = {
                 code: '200',
@@ -338,6 +348,7 @@ router.get('/random', async (ctx, next) => {
                 data: resList,
             }
         })
+
     } catch (error) {
         console.log(error)
         ctx.response.body = {
